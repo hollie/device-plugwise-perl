@@ -7,10 +7,10 @@ use Test::More tests => 4;
 
 use_ok 'Device::Plugwise';
 
-my $log = 't/log/basic.log';
-open my $fh, $log or die "Failed to open $log: $!\n";
+my $stim = 't/stim/basic.txt';
+open my $fh, $stim or die "Failed to open $stim: $!\n";
 
-my $plugwise = Device::Onkyo->new(filehandle => $fh);
+my $plugwise = Device::Plugwise->new(filehandle => $fh);
 ok $plugwise, 'object created';
 
 my $msg = $plugwise->read;
