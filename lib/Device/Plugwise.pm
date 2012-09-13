@@ -17,20 +17,20 @@ use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
 =head1 SYNOPSIS
 
   my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');
-  $plugwise->command(PLUG_ON, 'ABCDEF'); # Enable Circle#ABCDEF 
+  $plugwise->command('on', 'ABCDEF'); # Enable Circle#ABCDEF
   while (1) {
     my $message = $plugwise->read();
     print $message, "\n";
   }
 
   $plugwise = Device::Plugwise->new(device => 'hostname:port');
-  $plugwise->command(PLUG_ON, 'ABCDEF'); # Enable Circle#ABCDEF
+  $plugwise->command('on', 'ABCDEF'); # Enable Circle#ABCDEF
 
 =head1 DESCRIPTION
 
 Module for interfacing to Plugwise hardware.
 
-Current implemented functions are:
+Current implemented functions are
 
 =over
 
@@ -50,7 +50,7 @@ B<IMPORTANT:> This module required Plugwise firmware v2.37 or higher.
 
 =method C<new(%parameters)>
 
-This constructor returns a new Device::Plugwise object. Supported parameters are:
+This constructor returns a new Device::Plugwise object. Supported parameters are listed below
 
 =over
 
@@ -79,20 +79,20 @@ sub new {
     my ($pkg, %p) = @_;
 
     my $self = bless {
-	_buf => '',
-	_q => [],
-	baud => 115200,
-	device => '',
-	%p
+        _buf => '',
+        _q => [],
+        baud => 115200,
+        device => '',
+        %p
     }, $pkg;
 
 
     if (exists $p{filehandle}) {   # do not open device when a filehandle
-	delete $self->{device};    #  was defined (this is for testing purposes)
+        delete $self->{device};    #  was defined (this is for testing purposes)
     } else {
-	$self->_open();
+        $self->_open();
     }
-    
+
     return $self;
 
 }
@@ -140,7 +140,7 @@ sub _open {
       my $devices = $self->discover;
       my ($ip, $port) = @{$devices->[0]};
       $self->{port} = $port;
-      $self->{device} = $ip.':'.$port
+      $self->{device} = $ip.':'.$port;
     }
     $self->_open_tcp_port(@_);
   }
