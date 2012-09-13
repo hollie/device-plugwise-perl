@@ -17,4 +17,4 @@ requires:
   warnings: 0
 resources:
   repository: git://github.com/hollie/device-plugwise-perl.git
-version: 1.122570
+version: 0.001

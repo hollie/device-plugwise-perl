@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Device::Plugwise;
 {
-  $Device::Plugwise::VERSION = '1.122570';
+  $Device::Plugwise::VERSION = '0.001';
 }
 
 # ABSTRACT: First attempt at writing a modern Plugwise Perl module
@@ -19,7 +19,7 @@ Device::Plugwise - First attempt at writing a modern Plugwise Perl module
 
 =head1 VERSION
 
-version 1.122570
+version 0.001
 
 =head1 AUTHOR
 
