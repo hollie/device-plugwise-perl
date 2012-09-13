@@ -87,7 +87,7 @@ sub new {
     }, $pkg;
 
 
-    if (exists $p{filehandle}) {   # do not open device when a filehandle 
+    if (exists $p{filehandle}) {   # do not open device when a filehandle
 	delete $self->{device};    #  was defined (this is for testing purposes)
     } else {
 	$self->_open();
