@@ -33,11 +33,17 @@ Module for interfacing to Plugwise hardware.
 Current implemented functions are:
 
 =over
+
 =item Switching ON/OFF of circles
+
 =item Query circles for their status
+
 =item Query the Circles+ for known circles
+
 =item Retrieve the live power consumption of a Circle
+
 =item Readout the historic power consumption of a Circle (1-hour average)
+
 =back
 
 B<IMPORTANT:> This module required Plugwise firmware v2.37 or higher.
