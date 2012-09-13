@@ -9,9 +9,11 @@ use ExtUtils::MakeMaker 6.30;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "First attempt at writing a modern Plugwise Perl module",
+  "ABSTRACT" => "Perl module to communicate with Plugwise hardware",
   "AUTHOR" => "Lieven Hollevoet <hollie\@cpan.org>",
-  "BUILD_REQUIRES" => {},
+  "BUILD_REQUIRES" => {
+    "Test::More" => 0
+  },
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
   },
@@ -20,10 +22,20 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "Device::Plugwise",
   "PREREQ_PM" => {
+    "Carp" => 0,
+    "Device::SerialPort" => 0,
+    "Digest::CRC" => 0,
+    "Fcntl" => 0,
+    "IO::Select" => 0,
+    "IO::Socket::INET" => 0,
+    "Socket" => 0,
+    "Symbol" => 0,
+    "Time::HiRes" => 0,
+    "constant" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.001",
+  "VERSION" => "0.002",
   "test" => {
     "TESTS" => "t/*.t"
   }

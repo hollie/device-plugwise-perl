@@ -1,4 +1,7 @@
 Revision history for Perl extension Device::Plugwise.
 
-0.001     2012-09-13 08:10:43 Europe/Brussels
+0.002     2012-09-13 20:55:05 Europe/Brussels
 
+0.002: 20120913 First attempt at having all required functions in place
+
+0.001: 20120912 Initial commit 

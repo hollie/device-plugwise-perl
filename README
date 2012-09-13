@@ -1,9 +1,91 @@
 NAME
-    Device::Plugwise - First attempt at writing a modern Plugwise Perl
-    module
+    Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 VERSION
-    version 0.001
+    version 0.002
+
+SYNOPSIS
+      my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');
+      $plugwise->command('on', 'ABCDEF'); # Enable Circle#ABCDEF
+      while (1) {
+        my $message = $plugwise->read();
+        print $message, "\n";
+      }
+
+      $plugwise = Device::Plugwise->new(device => 'hostname:port');
+      $plugwise->command('on', 'ABCDEF'); # Enable Circle#ABCDEF
+
+DESCRIPTION
+    Module for interfacing to Plugwise hardware.
+
+    Current implemented functions are
+
+    Switching ON/OFF of circles
+    Query circles for their status
+    Query the Circles+ for known circles
+    Retrieve the live power consumption of a Circle
+    Readout the historic power consumption of a Circle (1-hour average)
+
+    IMPORTANT: This module required Plugwise firmware v2.37 or higher.
+
+METHODS
+  "new(%parameters)"
+    This constructor returns a new Device::Plugwise object. Supported
+    parameters are listed below
+
+    device
+        The name of the device to connect to, The value can be a tty device
+        name of "hostname:port" for a TCP connection. This parameter is
+        required.
+
+    filehandle
+        The name of an existing filehandle to be used instead of the
+        'device' parameter.
+
+    baud
+        The baud rate for the tty device. The default is 9600.
+
+    port
+        The port for a TCP device. There is no default port.
+
+  "device()"
+    Returns the device used to connect to the equipment. If a filehandle was
+    provided this method will return undef.
+
+  "baud()"
+    Returns the baud rate. Only makes sense when connected over serial.
+
+  "port()"
+    Returns the TCP port for the device. Only makes sense when using this
+    type of connection of course.
+
+  "filehandle()"
+    This method returns the file handle for the device.
+
+  "read([$timeout])"
+    This method blocks until a new message has been received by the device.
+    When a message is received the message string is returned. An optional
+    timeout (in seconds) may be provided.
+
+  "read_one(\$buffer, [$do_not_write])"
+    This method attempts to remove a single message from the buffer passed
+    in via the scalar reference. When a message is removed a data structure
+    is returned that represents the data received. If insufficient data is
+    available then undef is returned.
+
+    By default, a received message triggers sending of the next queued
+    message if the $do_no_write parameter is set then writes are not
+    triggered.
+
+  "write($command, $callback)"
+    This method queues a command for sending to the connected device. The
+    first write will be written immediately, subsequent writes are queued
+    until a response to the previous message is received.
+
+ACKNOWLEDGEMENTS
+    The code of this module is heavily based the code by Mark Hindess
+    (Device::Onkyo), thanks Mark! The initial Perl Plugwise interface code
+    for firmware v1 was written by Jfn.
 
 AUTHOR
     Lieven Hollevoet <hollie@cpan.org>

@@ -1,8 +1,9 @@
 ---
-abstract: 'First attempt at writing a modern Plugwise Perl module'
+abstract: 'Perl module to communicate with Plugwise hardware'
 author:
   - 'Lieven Hollevoet <hollie@cpan.org>'
-build_requires: {}
+build_requires:
+  Test::More: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
@@ -13,8 +14,19 @@ meta-spec:
   version: 1.4
 name: Device-Plugwise
 requires:
+  Carp: 0
+  Device::SerialPort: 0
+  Digest::CRC: 0
+  Fcntl: 0
+  IO::Select: 0
+  IO::Socket::INET: 0
+  Socket: 0
+  Symbol: 0
+  Time::HiRes: 0
+  constant: 0
   strict: 0
   warnings: 0
 resources:
+  bugtracker: https://github.com/hollie/device-plugwise-perl/issues
   repository: git://github.com/hollie/device-plugwise-perl.git
-version: 0.001
+version: 0.002
