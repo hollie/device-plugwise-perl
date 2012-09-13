@@ -1,0 +1,16 @@
+NAME
+    Device::Plugwise - First attempt at writing a modern Plugwise Perl
+    module
+
+VERSION
+    version 1.122570
+
+AUTHOR
+    Lieven Hollevoet <hollie@cpan.org>
+
+COPYRIGHT AND LICENSE
+    This software is copyright (c) 2012 by Lieven Hollevoet.
+
+    This is free software; you can redistribute it and/or modify it under
+    the same terms as the Perl 5 programming language system itself.
+
