@@ -82,7 +82,7 @@ sub new {
     my $self = bless {
         _buf => '',
         _q => [],
-	_response_queue => {},
+        _response_queue => {},
         _connected => 0,
         baud => 115200,
         device => '',
@@ -297,7 +297,7 @@ sub _stick_init {
 sub _plugwise_crc
 {
     my ($self, $data) = @_;
-    sprintf ("%04X", crc($data, 16, 0, 0, 0, 0x1021, 0));
+    sprintf ("%04X", crc($data, 16, 0, 0, 0, 0x1021, 0, 0));
 }
 
 
@@ -344,13 +344,13 @@ sub _process_response
       # We sometimes get this reponse on the initial init request, re-init in this case
       $self->_write("000A");
       return "no_xpl_message_required";
-    } else {  
+    } else {
       #$xpl->ouch("Received response code with error: $frame\n");
       $xplmsg{schema} = 'log.basic';
       $xplmsg{body} = [ 'type' => 'err', 'text' => "Received error response", 'code' => $self->{_last_pkt_to_uart} . ":" . $2 ];
       delete $self->{_response_queue}->{hex($1)};
       $self->{_awaiting_stick_response} = 0;
-    
+
       return \%xplmsg;
 
     }
@@ -366,10 +366,10 @@ sub _process_response
     $self->{_plugwise}->{short_key}   = $5;
     $self->{_plugwise}->{connected}   = 1;
 
-    # Update the response_queue, remove the entry corresponding to this reply 
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    $xpl->info("PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n");
+    #$xpl->info("PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n");
     return "no_xpl_message_required";
   }
 
@@ -378,17 +378,17 @@ sub _process_response
     my $saddr = $self->addr_l2s($2);
     my $msg_type = $self->{_response_queue}->{hex($1)}->{type} || "control.basic";
 
-	if ($msg_type eq 'control.basic') {
-		$xplmsg{schema} = 'sensor.basic';
-		$xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'current' => 'LOW'];
-	} else {
-		$xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'onoff' => 'off'];
-	}
-    # Update the response_queue, remove the entry corresponding to this reply 
+    if ($msg_type eq 'control.basic') {
+        $xplmsg{schema} = 'sensor.basic';
+        $xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'current' => 'LOW'];
+    } else {
+        $xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'onoff' => 'off'];
+    }
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    $xpl->info("PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n");
-    return \%xplmsg;      
+    #$xpl->info("PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n");
+    return \%xplmsg;
   }
 
   #   circle on resp |  seq. nr.     |    | circle MAC
@@ -396,18 +396,18 @@ sub _process_response
     my $saddr = $self->addr_l2s($2);
     my $msg_type = $self->{_response_queue}->{hex($1)}->{type} || "control.basic";
 
-	if ($msg_type eq 'control.basic') {
-		$xplmsg{schema} = 'sensor.basic';
-		$xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'current' => 'HIGH'];
-	} else {
-		$xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'onoff' => 'on'];
-	}
-	
-    # Update the response_queue, remove the entry corresponding to this reply 
+    if ($msg_type eq 'control.basic') {
+        $xplmsg{schema} = 'sensor.basic';
+        $xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'current' => 'HIGH'];
+    } else {
+        $xplmsg{body} = ['device'  => $saddr, 'type' => 'output', 'onoff' => 'on'];
+    }
+
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    $xpl->info("PLUGWISE: Stick reported Circle " . $saddr . " is ON\n");
-    return \%xplmsg;      
+    #$xpl->info("PLUGWISE: Stick reported Circle " . $saddr . " is ON\n");
+    return \%xplmsg;
   }
 
   # Process the response on a powerinfo request
@@ -421,27 +421,27 @@ sub _process_response
     $self->{_plugwise}->{circles}->{$saddr}->{pulse1} = $pulse1;
     $self->{_plugwise}->{circles}->{$saddr}->{pulse8} = $pulse8;
 
-    # Ensure we have the calibration info before we try to calc the power, 
+    # Ensure we have the calibration info before we try to calc the power,
     # if we don't have it, return an error reponse
     if (!defined $self->{_plugwise}->{circles}->{$saddr}->{gainA}){
-	$xpl->ouch("Cannot report the power, calibration data not received yet for $saddr\n");
+        #$xpl->ouch("Cannot report the power, calibration data not received yet for $saddr\n");
         $xplmsg{schema} = 'log.basic';
         $xplmsg{body} = [ 'type' => 'err', 'text' => "Report power failed, calibration data not retrieved yet", 'device' => $saddr ];
         delete $self->{_response_queue}->{hex($1)};
 
-	return \%xplmsg;
+        return \%xplmsg;
     }
 
     # Calculate the live power
     my ($pow1, $pow8) = $self->calc_live_power($saddr);
-    
-    # Update the response_queue, remove the entry corresponding to this reply 
+
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
     # Create the corresponding xPL message
     $xplmsg{body} = ['device'  => $saddr, 'type' => 'power', 'current' => $pow1/1000, 'current8' => $pow8/1000, 'units' => 'kW'];
 
-    $xpl->info("PLUGWISE: Circle " . $saddr . " live power 1/8 is: $pow1/$pow8 W\n");
+    #$xpl->info("PLUGWISE: Circle " . $saddr . " live power 1/8 is: $pow1/$pow8 W\n");
 
     return \%xplmsg;
   }
@@ -451,12 +451,12 @@ sub _process_response
   if ($frame =~/^0019([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{2})$/) {
     # Store the node in the object
     if ($3 ne "FFFFFFFFFFFFFFFF") {
-	$self->{_plugwise}->{circles}->{substr($3, -6, 6)} = {}; # Store the last 6 digits of the MAC address for later use
-	# And immediately queue a request for calibration info
-	$self->queue_packet_to_stick("0026".$3, "Request calibration info");
+        $self->{_plugwise}->{circles}->{substr($3, -6, 6)} = {}; # Store the last 6 digits of the MAC address for later use
+        # And immediately queue a request for calibration info
+        $self->queue_packet_to_stick("0026".$3, "Request calibration info");
     }
-      
-    # Update the response_queue, remove the entry corresponding to this reply 
+
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
     # Only when we have walked the complete list
@@ -464,11 +464,10 @@ sub _process_response
 
     my @xpl_body = ('command' => 'listcircles');
     my $count = 0;
-    my $device_id;
 
-    foreach $device_id (keys %{$self->{_plugwise}->{circles}}){
-	my $device_string = sprintf("device%02i", $count++);
-	push @xpl_body, ($device_string => $device_id);
+    foreach my $device_id (keys %{$self->{_plugwise}->{circles}}){
+        my $device_string = sprintf("device%02i", $count++);
+        push @xpl_body, ($device_string => $device_id);
     }
 
     # Construct the complete xpl message
@@ -490,15 +489,15 @@ sub _process_response
 
     my $circle_date_time = $self->tstamp2time($3);
 
-    $xpl->info("PLUGWISE: Received status reponse for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n");
+    #$xpl->info("PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n");
 
     if ($msg_type eq 'sensor.basic') {
-	$xplmsg{schema} = $msg_type;
-	$xplmsg{body} = ['device' => $saddr, 'type' => 'output', 'current' => $current];
+        $xplmsg{schema} = $msg_type;
+        $xplmsg{body} = ['device' => $saddr, 'type' => 'output', 'current' => $current];
     } else {
-	$xplmsg{body} = ['device' => $saddr, 'type' => 'output', 'onoff' => $onoff, 'address' => $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr}, 'datetime' => $circle_date_time];
+        $xplmsg{body} = ['device' => $saddr, 'type' => 'output', 'onoff' => $onoff, 'address' => $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr}, 'datetime' => $circle_date_time];
     }
-    # Update the response_queue, remove the entry corresponding to this reply 
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
     return \%xplmsg;
@@ -510,24 +509,24 @@ sub _process_response
     #print "Received for $2 calibration response!\n";
     my $saddr = $self->addr_l2s($2);
     #print "Short address  = $saddr\n";
-    $xpl->info("PLUGWISE: Received calibration reponse for circle $saddr\n");
+    #$xpl->info("PLUGWISE: Received calibration reponse for circle $saddr\n");
 
     $self->{_plugwise}->{circles}->{$saddr}->{gainA}   = $self->hex2float($3);
     $self->{_plugwise}->{circles}->{$saddr}->{gainB}   = $self->hex2float($4);
     $self->{_plugwise}->{circles}->{$saddr}->{offtot}  = $self->hex2float($5);
     $self->{_plugwise}->{circles}->{$saddr}->{offruis} = $self->hex2float($6);
 
-    # Update the response_queue, remove the entry corresponding to this reply 
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    return "no_xpl_message_required";      
+    return "no_xpl_message_required";
   }
 
   # Process the response on a historic buffer readout
   if ($frame =~/^0049([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{8})$/){
   # history resp     |  seq. nr.     ||  Circle+ MAC   || info 1         || info 2         || info 3         || info 4         || address
     my $s_id     = $self->addr_l2s($2);
-    my $log_addr = (hex($7) - 278528) / 8 ;  
+    my $log_addr = (hex($7) - 278528) / 8 ;
     #print "Received history response for $2 and address $log_addr!\n";
 
     # Assign the values to the data hash
@@ -537,30 +536,30 @@ sub _process_response
     $self->{_plugwise}->{circles}->{$s_id}->{history}->{info3} = $5;
     $self->{_plugwise}->{circles}->{$s_id}->{history}->{info4} = $6;
 
-    # Ensure we have the calibration info before we try to calc the power, 
+    # Ensure we have the calibration info before we try to calc the power,
     # if we don't have it, return an error reponse
     if (!defined $self->{_plugwise}->{circles}->{$s_id}->{gainA}){
-	$xpl->ouch("Cannot report the power, calibration data not received yet for $s_id\n");
+	#$xpl->ouch("Cannot report the power, calibration data not received yet for $s_id\n");
         $xplmsg{schema} = 'log.basic';
         $xplmsg{body} = [ 'type' => 'err', 'text' => "Report power failed, calibration data not retrieved yet", 'device' => $s_id ];
         delete $self->{_response_queue}->{hex($1)};
 
-	return \%xplmsg;
+        return \%xplmsg;
     }
     my ($tstamp, $energy) = $self->report_history($s_id);
 
     $xplmsg{body} = ['device' => $s_id, 'type' => 'energy', 'current' => $energy, 'units' => 'kWh', 'datetime' => $tstamp];
-	
-	$xpl->info("PLUGWISE: Historic energy for $s_id"."[$log_addr] is $energy kWh on $tstamp\n");
-	
-    # Update the response_queue, remove the entry corresponding to this reply 
+
+    #$xpl->info("PLUGWISE: Historic energy for $s_id"."[$log_addr] is $energy kWh on $tstamp\n");
+
+    # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
     return \%xplmsg;
   }
 
   # We should not get here unless we receive responses that are not implemented...
-  $xpl->ouch("Received unknown response: '$frame'");
+  #$xpl->ouch("Received unknown response: '$frame'");
   return "no_xpl_message_required";
 
 }
