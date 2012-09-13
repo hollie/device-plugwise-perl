@@ -61,11 +61,11 @@ parameter.
 
 The baud rate for the tty device.  The default is C<9600>.
 
-=back
-
 =item port
 
 The port for a TCP device.  There is no default port
+
+=back
 
 =cut
 
