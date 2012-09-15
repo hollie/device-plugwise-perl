@@ -3,7 +3,8 @@
 # Copyright (C) 2012 by Lieven Hollevoet
 
 use strict;
-use Test::More tests => 2;
+use Test::More tests => 5;
+use Data::Dumper;
 
 use_ok 'Device::Plugwise';
 
@@ -15,7 +16,13 @@ open my $fh, $stim or die "Failed to open $stim: $!\n";
 my $plugwise = Device::Plugwise->new(device => 'localhost:2500');
 ok $plugwise, 'object created';
 
-#my $msg = $plugwise->read;
-#is $msg, 'Connected', '... connnected';
+my $msg = $plugwise->read(3);
+$msg = $plugwise->read(3);
+is $msg, 'connected', '... connnected';
+
+my $status = $plugwise->status();
+
+is $status->{connected}, 1, '... status updated OK';
+is $status->{short_key}, 'BABE', "... network key extracted";
 
 

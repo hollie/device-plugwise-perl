@@ -11,7 +11,9 @@ use Symbol qw(gensym);
 use Time::HiRes;
 use Digest::CRC qw(crc);
 
-use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
+#use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
+use constant DEBUG => 1;
+use constant XPL_DEBUG => 1;
 
 # ABSTRACT: Perl module to communicate with Plugwise hardware
 
@@ -247,7 +249,7 @@ queued until a response to the previous message is received.
 sub write {
   my ($self, $cmd, $cb) = @_;
   print STDERR "queuing: $cmd\n" if DEBUG;
-  my $packet = "\05\05\03\03" . $cmd . $self->_plugwise_crc($cmd);
+  my $packet = "\05\05\03\03" . $cmd . $self->_plugwise_crc($cmd) . "\r\n";
   push @{$self->{_q}}, [$packet, $cmd, $cb];
   $self->_write_now unless ($self->{_waiting});
   1;
@@ -315,6 +317,8 @@ sub _process_response
 {
   my ($self, $frame) = @_;
 
+  print STDERR "Processing '$frame'\n" if DEBUG;
+
   # The default xpl message is a plugwise.basic trig, can be overwritten when required.
   my %xplmsg = (
       message_type => 'xpl-stat',
@@ -369,8 +373,8 @@ sub _process_response
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    #$xpl->info("PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n");
-    return "no_xpl_message_required";
+    print STDERR "PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n" if XPL_DEBUG;
+    return "connected";
   }
 
   #   circle off resp|  seq. nr.     |    | circle MAC
@@ -387,7 +391,7 @@ sub _process_response
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    #$xpl->info("PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n");
+    print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n" if XPL_DEBUG;
     return \%xplmsg;
   }
 
@@ -405,8 +409,7 @@ sub _process_response
 
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
-
-    #$xpl->info("PLUGWISE: Stick reported Circle " . $saddr . " is ON\n");
+    print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is ON\n" if XPL_DEBUG;
     return \%xplmsg;
   }
 
@@ -441,7 +444,7 @@ sub _process_response
     # Create the corresponding xPL message
     $xplmsg{body} = ['device'  => $saddr, 'type' => 'power', 'current' => $pow1/1000, 'current8' => $pow8/1000, 'units' => 'kW'];
 
-    #$xpl->info("PLUGWISE: Circle " . $saddr . " live power 1/8 is: $pow1/$pow8 W\n");
+    print STDERR "PLUGWISE: Circle " . $saddr . " live power 1/8 is: $pow1/$pow8 W\n" if XPL_DEBUG;
 
     return \%xplmsg;
   }
@@ -489,7 +492,7 @@ sub _process_response
 
     my $circle_date_time = $self->tstamp2time($3);
 
-    #$xpl->info("PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n");
+    print STDERR "PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n" if XPL_DEBUG;
 
     if ($msg_type eq 'sensor.basic') {
         $xplmsg{schema} = $msg_type;
@@ -509,7 +512,7 @@ sub _process_response
     #print "Received for $2 calibration response!\n";
     my $saddr = $self->addr_l2s($2);
     #print "Short address  = $saddr\n";
-    #$xpl->info("PLUGWISE: Received calibration reponse for circle $saddr\n");
+    print STDERR "PLUGWISE: Received calibration reponse for circle $saddr\n" if XPL_DEBUG;
 
     $self->{_plugwise}->{circles}->{$saddr}->{gainA}   = $self->hex2float($3);
     $self->{_plugwise}->{circles}->{$saddr}->{gainB}   = $self->hex2float($4);
@@ -550,7 +553,7 @@ sub _process_response
 
     $xplmsg{body} = ['device' => $s_id, 'type' => 'energy', 'current' => $energy, 'units' => 'kWh', 'datetime' => $tstamp];
 
-    #$xpl->info("PLUGWISE: Historic energy for $s_id"."[$log_addr] is $energy kWh on $tstamp\n");
+    print STDERR "PLUGWISE: Historic energy for $s_id"."[$log_addr] is $energy kWh on $tstamp\n" if XPL_DEBUG;
 
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
@@ -562,6 +565,27 @@ sub _process_response
   #$xpl->ouch("Received unknown response: '$frame'");
   return "no_xpl_message_required";
 
+}
+
+=method C<status()>
+
+This method returns the status of the internal _plugwise
+hash. 
+This can be used to extract network information and for debugging.
+Hash entries include
+
+=over
+=item connected   : is the software connected to the USB stick
+=item stick_MAC   : Zigbee MAC address of the stick
+=item network_key : Full zigbee network ID
+=item short_key   : Short version of the network ID
+=back
+
+=cut
+
+sub status {
+  my ($self) = @_;
+  return $self->{_plugwise};
 }
 
 =head1 ACKNOWLEDGEMENTS
