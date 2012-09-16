@@ -3,7 +3,7 @@
 # Copyright (C) 2012 by Lieven Hollevoet
 
 use strict;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Data::Dumper;
 
 use_ok 'Device::Plugwise';
@@ -25,4 +25,5 @@ my $status = $plugwise->status();
 is $status->{connected}, 1, '... status updated OK';
 is $status->{short_key}, 'BABE', "... network key extracted";
 
+is $plugwise->command('on', 'ABCDEF'), 1, "... command send OK";
 
