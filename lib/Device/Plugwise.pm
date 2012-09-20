@@ -12,8 +12,9 @@ use Time::HiRes;
 use Digest::CRC qw(crc);
 
 #use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
-use constant DEBUG => 1;
-use constant XPL_DEBUG => 1;
+use constant DEBUG => 1;     # Print debug information on the module itself
+use constant XPL_DEBUG => 0; # Print debug information on the plugwise protocol
+use constant PHY_DEBUG => 0; # Print debug information on the physical link
 
 # ABSTRACT: Perl module to communicate with Plugwise hardware
 
@@ -207,7 +208,7 @@ sub read {
     $timeout -= $self->{_last_read} - $start if (defined $timeout);
     croak defined $bytes ? 'closed' : 'error: '.$! unless ($bytes);
     $res = $self->read_one(\$self->{_buf});
-    $self->_write_now() if (defined $res);
+    $self->_write_now() if (defined $res && !$self->{_awaiting_stick_response});
     return $res if (defined $res);
   } while (1);
 }
@@ -228,11 +229,11 @@ sub read_one {
   my ($self, $rbuf, $no_write) = @_;
   return unless ($$rbuf);
 
-  print STDERR "rbuf=", _hexdump($$rbuf), "\n" if DEBUG;
+  print STDERR "rbuf=", _hexdump($$rbuf), "\n" if PHY_DEBUG;
 
   return unless ($$rbuf =~ s/\x05\x05\x03\x03(\w+)\r\n//);
   my $body = $self->_process_response($1);
-  $self->_write_now unless ($no_write);
+  $self->_write_now unless ($no_write || $self->{_awaiting_stick_response});
   return $body;
 
 }
@@ -248,7 +249,7 @@ queued until a response to the previous message is received.
 
 sub write {
   my ($self, $cmd, $cb) = @_;
-  print STDERR "queuing: $cmd\n" if DEBUG;
+  print STDERR "Queuing: $cmd\n" if XPL_DEBUG;
   my $packet = "\05\05\03\03" . $cmd . $self->_plugwise_crc($cmd) . "\r\n";
   push @{$self->{_q}}, [$packet, $cmd, $cb];
   $self->_write_now unless ($self->{_waiting});
@@ -270,20 +271,10 @@ sub _write_now {
 
 sub _real_write {
   my ($self, $str, $desc, $cb) = @_;
-  print STDERR "sending: $desc\n  ", _hexdump($str), "\n" if DEBUG;
+  print STDERR "Sending: $desc\n"   if XPL_DEBUG;
+  print STDERR _hexdump($str), "\n" if PHY_DEBUG;
   syswrite $self->filehandle, $str, length $str;
   $self->{_awaiting_stick_response} = 1;
-}
-
-sub _time_now {
-  Time::HiRes::time
-}
-
-sub _hexdump {
-  my $s = shift;
-  my $r = unpack 'H*', $s;
-  $s =~ s/[^ -~]/./g;
-  $r.' '.$s;
 }
 
 sub _stick_init {
@@ -316,7 +307,7 @@ sub _plugwise_crc
 sub _process_response {
   my ($self, $frame) = @_;
 
-  print STDERR "Processing '$frame'\n" if DEBUG;
+  print STDERR "Processing '$frame'\n" if XPL_DEBUG;
 
   # The default xpl message is a plugwise.basic trig, can be overwritten when required.
   my %xplmsg = (
@@ -330,13 +321,13 @@ sub _process_response {
       #$xpl->ouch("PLUGWISE: received a frame with an invalid CRC");
       $xplmsg{schema} = 'log.basic';
       $xplmsg{body} = [ 'type' => 'err', 'text' => "Received frame with invalid CRC", 'code' => $frame ];
-      return "";
+      return \%xplmsg;
   }
 
   # Strip CRC, we already know it is correct
   $frame =~ s/(.{4}$)//;
 
-  # After a command is sent to the stick, we first receive an 'ACK'. This 'ACK' contains a sequence number that we want to track and notifies us of errors.
+  # After a command is sent to the stick, we first receive an 'ACK'. This 'ACK' contains a sequence number that we want to track and that notifies us of errors.
   if ($frame =~ /^0000([[:xdigit:]]{4})([[:xdigit:]]{4})$/) {
   #      ack          |  seq. nr.     || response code |
     if ($2 eq "00C1") {
@@ -346,7 +337,7 @@ sub _process_response {
       return "no_xpl_message_required"; # We received ACK from stick, we should not send an xPL message out for this response
     } elsif ($2 eq "00C2"){
       # We sometimes get this reponse on the initial init request, re-init in this case
-      $self->_write("000A");
+      $self->write("000A");
       return "no_xpl_message_required";
     } else {
       #$xpl->ouch("Received response code with error: $frame\n");
@@ -373,7 +364,7 @@ sub _process_response {
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    print STDERR "PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n" if DEBUG;
     return "connected";
   }
 
@@ -391,7 +382,7 @@ sub _process_response {
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
 
-    print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n" if DEBUG;
     return \%xplmsg;
   }
 
@@ -409,7 +400,7 @@ sub _process_response {
 
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
-    print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is ON\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is ON\n" if DEBUG;
     return \%xplmsg;
   }
 
@@ -444,7 +435,7 @@ sub _process_response {
     # Create the corresponding xPL message
     $xplmsg{body} = ['device'  => $saddr, 'type' => 'power', 'current' => $pow1/1000, 'current8' => $pow8/1000, 'units' => 'kW'];
 
-    print STDERR "PLUGWISE: Circle " . $saddr . " live power 1/8 is: $pow1/$pow8 W\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Circle " . $saddr . " live power 1/8 is: $pow1/$pow8 W\n" if DEBUG;
     return \%xplmsg;
   }
 
@@ -491,7 +482,7 @@ sub _process_response {
 
     my $circle_date_time = $self->tstamp2time($3);
 
-    print STDERR "PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n" if DEBUG;
 
     if ($msg_type eq 'sensor.basic') {
         $xplmsg{schema} = $msg_type;
@@ -511,7 +502,7 @@ sub _process_response {
     #print "Received for $2 calibration response!\n";
     my $saddr = $self->_addr_l2s($2);
     #print "Short address  = $saddr\n";
-    print STDERR "PLUGWISE: Received calibration reponse for circle $saddr\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Received calibration reponse for circle $saddr\n" if DEBUG;
 
     $self->{_plugwise}->{circles}->{$saddr}->{gainA}   = $self->_hex2float($3);
     $self->{_plugwise}->{circles}->{$saddr}->{gainB}   = $self->_hex2float($4);
@@ -561,7 +552,7 @@ sub _process_response {
 
     $xplmsg{body} = ['device' => $s_id, 'type' => 'energy', 'current' => $energy, 'units' => 'kWh', 'datetime' => $tstamp];
 
-    print STDERR "PLUGWISE: Historic energy for $s_id"."[$log_addr] is $energy kWh on $tstamp\n" if XPL_DEBUG;
+    print STDERR "PLUGWISE: Historic energy for $s_id"."[$log_addr] is $energy kWh on $tstamp\n" if DEBUG;
 
     # Update the response_queue, remove the entry corresponding to this reply
     delete $self->{_response_queue}->{hex($1)};
@@ -748,6 +739,20 @@ sub _hex2float {
     my $floater = unpack('f', reverse pack('H*', $hexstr));
     return $floater;
 }
+
+# Return the time
+sub _time_now {
+  Time::HiRes::time
+}
+
+# Print the data in hex
+sub _hexdump {
+  my $s = shift;
+  my $r = unpack 'H*', $s;
+  $s =~ s/[^ -~]/./g;
+  $r.' '.$s;
+}
+
 
 =head1 ACKNOWLEDGEMENTS
 
