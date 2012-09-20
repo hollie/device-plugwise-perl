@@ -12,13 +12,16 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl module to communicate with Plugwise hardware",
   "AUTHOR" => "Lieven Hollevoet <hollie\@cpan.org>",
   "BUILD_REQUIRES" => {
+    "Data::Dumper" => 0,
     "Test::More" => 0
   },
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
   },
   "DISTNAME" => "Device-Plugwise",
-  "EXE_FILES" => [],
+  "EXE_FILES" => [
+    "bin/plugwise.pl"
+  ],
   "LICENSE" => "perl",
   "NAME" => "Device::Plugwise",
   "PREREQ_PM" => {
@@ -35,7 +38,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.002",
+  "VERSION" => "0.003",
   "test" => {
     "TESTS" => "t/*.t"
   }

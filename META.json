@@ -37,6 +37,7 @@
       },
       "test" : {
          "requires" : {
+            "Data::Dumper" : "0",
             "Test::More" : "0"
          }
       }
@@ -52,6 +53,6 @@
          "web" : "https://github.com/hollie/device-plugwise-perl"
       }
    },
-   "version" : "0.002"
+   "version" : "0.003"
 }
 

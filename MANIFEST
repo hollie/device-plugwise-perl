@@ -5,10 +5,10 @@ META.json
 META.yml
 Makefile.PL
 README
+bin/plugwise.pl
 dist.ini
 lib/Device/Plugwise.pm
 t/01-basic.t
-t/01-basic.t~
 t/author-critic.t
 t/release-common_spelling.t
 t/release-eol.t

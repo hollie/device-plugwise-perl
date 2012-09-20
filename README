@@ -2,7 +2,7 @@ NAME
     Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 VERSION
-    version 0.002
+    version 0.003
 
 SYNOPSIS
       my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');
@@ -81,6 +81,36 @@ METHODS
     This method queues a command for sending to the connected device. The
     first write will be written immediately, subsequent writes are queued
     until a response to the previous message is received.
+
+  "status()"
+    This method returns the status of the internal _plugwise hash. This can
+    be used to extract network information and for debugging. Hash entries
+    include
+
+    connected : is the software connected to the USB stick
+    stick_MAC : Zigbee MAC address of the stick
+    network_key : Full zigbee network ID
+    short_key : Short version of the network ID
+
+  "command($command, $target)"
+    This method sends a command to the stick.
+
+    Supported $commands without a target id are:
+
+    listcircles : get a list of connected Circles, respond with their ID's
+
+    Supported $commands with a target id are:
+
+    on : switch a circle on
+    off : switch a circle off
+    status : request the current switch state, internal clock, live power
+    consumption
+    livepower : request the current power measured by the Circle
+    history : TODO: request the energy consumption for a specific logaddress
+
+    $target can either be a single short hardware MAC address or a
+    comma-separated list of devices if multiple devices need to receive the
+    same command.
 
 ACKNOWLEDGEMENTS
     The code of this module is heavily based the code by Mark Hindess

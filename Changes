@@ -1,7 +1,181 @@
-Revision history for Perl extension Device::Plugwise.
+==================================================
+Changes from 2011-09-21 00:00:00 +0000 to present.
+==================================================
 
-0.002     2012-09-13 20:55:05 Europe/Brussels
+------------------------------------------
+version 0.003 at 2012-09-20 21:26:14 +0000
+------------------------------------------
 
-0.002: 20120913 First attempt at having all required functions in place
+  Change: 9d515e614241edd7f541a1bd77828bba4cf13934
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-20 23:25:46 +0000
 
-0.001: 20120912 Initial commit 
+    Changes is now auto-generated 
+
+  Change: a433fcde3de9372cd71d6b457b9275c90ff6dab2
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-20 23:15:02 +0000
+
+    Ignore personal eclipse settings 
+
+  Change: 5045ba8e32d4957eccc8ccbe9f74ff12f2dfd000
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-20 23:13:42 +0000
+
+    Dual-message readout is working correctly for first tests 
+
+  Change: 525bcb47eb4c27f1672919b3851f76e376f6494a
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-20 22:00:44 +0000
+
+    Attempt to unsplit reading the ACK and the response of a command 
+
+  Change: 1b167b641903bc8282b063645893c03fa4622385
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-20 08:44:58 +0000
+
+    Wait until two-stage response is received before sending a new
+    command 
+
+  Change: 8e3b4ca205b52631b4475ac5746efe7ee0d44f0f
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-16 22:40:19 +0000
+
+    Added first code for command transmission. Basic test is working. 
+
+  Change: 61c02041311b0d18625d62cb791042fe91911aa0
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-15 22:35:13 +0000
+
+    Connection to emulated stick working fine 
+
+  Change: 4aa3fd8a8777418ef08ecc76850797b3f2f8d50f
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 20:54:55 +0000
+
+    Added decoding of Stick responses 
+
+  Change: c2a33500b192475530c7e0922e4d43fcbf05ac08
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 20:02:41 +0000
+
+    Commit before shutting down laptop 
+
+  Change: 6086f1e76335011f8a5ba5e4a40a574422de9ee3
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 17:03:51 +0000
+
+    Found out how to run RELEASE_TESTING without going through the
+    release flow ;-) 
+
+  Change: 9c3f89e60eca095788606cb25dec79e09fc89184
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 09:11:10 +0000
+
+    Fix incorrect line endings 
+
+  Change: 658ee401eaed06b31148efdb06dc4e14860f27dc
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 09:08:39 +0000
+
+    Another POD error fix 
+
+  Change: 7bcb62d6fc0e9eaeadde7c68456e0808e1a794d1
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 09:02:14 +0000
+
+    Fixed POD error 
+
+  Change: 84153320f91173f6818be6705d69495553e4251e
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:56:50 +0000
+
+    Constructor added 
+
+  Change: 607efdd77104f48f17e550be4a442783ee35990f
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:20:15 +0000
+
+    Added first module test 
+
+  Change: 4043e989b7c9cb324dc6b4f0f8fa7a7d00922402
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:10:49 +0000
+
+    v0.001 
+
+  Change: abc3d117b8bf29a5dcbf38eeefa11492c52d120f
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:05:32 +0000
+
+    v1.122570 
+
+  Change: d669b85fd3151bf457e99438f42d33ebfeed7040
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:05:23 +0000
+
+    Added changes file 
+
+  Change: dcca25603c1566c590b12b627caff2851663fc7d
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-11 22:18:07 +0000
+
+    Updated gitignore file to not track release folders 
+
+  Change: 80eba020e9e90483a83ff9c0b9f02767c9771d08
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-11 22:15:10 +0000
+
+    Removed README.md 
+
+  Change: d78af05ea240640d3fc4d5fcea9d8ed813f552b6
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-11 22:14:12 +0000
+
+    Get the next version from Git 
+
+  Change: 9708e71514fedf5ffbce176f5e5d44f20c7bf49b
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-11 21:52:40 +0000
+
+    Initial commit 
+
+  Change: 330856a1ded348c832edcb96d0d15c591920f075
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-11 12:45:46 +0000
+
+    Initial commit 
+
+------------------------------------------
+version 0.002 at 2012-09-13 18:55:16 +0000
+------------------------------------------
+
+  Change: ca3d06e39e3079ee36296b33dee1cd7321ef26b8
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 20:55:16 +0000
+
+    Build results of 4aa3fd8 (on master) 
+
+------------------------------------------
+version 0.001 at 2012-09-13 06:10:50 +0000
+------------------------------------------
+
+  Change: 63031e5b2e4dc113c70ece441c0777464269602d
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:10:50 +0000
+
+    Build results of 4043e98 (on master) 
+
+---------------------------------------------
+version 1.122570 at 2012-09-13 06:05:32 +0000
+---------------------------------------------
+
+  Change: 7179cbd465318523bcd7bfd1ea6247222aac1764
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-13 08:05:32 +0000
+
+    Build results of abc3d11 (on master) 
+
+================
+End of releases.
+================
