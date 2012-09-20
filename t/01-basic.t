@@ -16,10 +16,8 @@ use_ok 'Device::Plugwise';
 my $plugwise = Device::Plugwise->new(device => 'localhost:2500');
 ok $plugwise, 'object created';
 
-$plugwise->command('on', "001122");
 my $msg = $plugwise->read(3);
-$msg = $plugwise->read(3);
-is $msg, 'connected', '... connnected';
+is $msg, 'connected', '... connected';
 
 my $status = $plugwise->status();
 

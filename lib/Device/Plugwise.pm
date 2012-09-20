@@ -209,7 +209,7 @@ sub read {
     croak defined $bytes ? 'closed' : 'error: '.$! unless ($bytes);
     $res = $self->read_one(\$self->{_buf});
     $self->_write_now() if (defined $res && !$self->{_awaiting_stick_response});
-    return $res if (defined $res && $res ne "ack");
+    return $res if (defined $res);
   } while (1);
 }
 
@@ -233,7 +233,13 @@ sub read_one {
 
   return unless ($$rbuf =~ s/\x05\x05\x03\x03(\w+)\r\n//);
   my $body = $self->_process_response($1);
-  
+
+  # If we received an 'ack' then we need to try to read the next message
+  if ($body eq 'ack') {
+    return unless ($$rbuf =~ s/\x05\x05\x03\x03(\w+)\r\n//);
+    $body = $self->_process_response($1);
+  }
+
   $self->_write_now unless ($no_write || $self->{_awaiting_stick_response});
   return $body;
 
