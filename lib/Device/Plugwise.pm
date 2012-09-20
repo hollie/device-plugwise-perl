@@ -200,7 +200,7 @@ sub read {
   return $res if (defined $res);
   my $fh = $self->filehandle;
   my $sel = IO::Select->new($fh);
-  do {
+  READ_RESPONSE: do {
     my $start = $self->_time_now;
     $sel->can_read($timeout) or return;
     my $bytes = sysread $fh, $self->{_buf}, 2048, length $self->{_buf};
@@ -209,7 +209,7 @@ sub read {
     croak defined $bytes ? 'closed' : 'error: '.$! unless ($bytes);
     $res = $self->read_one(\$self->{_buf});
     $self->_write_now() if (defined $res && !$self->{_awaiting_stick_response});
-    return $res if (defined $res);
+    return $res if (defined $res && $res ne "ack");
   } while (1);
 }
 
@@ -233,6 +233,7 @@ sub read_one {
 
   return unless ($$rbuf =~ s/\x05\x05\x03\x03(\w+)\r\n//);
   my $body = $self->_process_response($1);
+  
   $self->_write_now unless ($no_write || $self->{_awaiting_stick_response});
   return $body;
 
@@ -334,7 +335,7 @@ sub _process_response {
       $self->{_response_queue}->{hex($1)}->{received_ok} = 1;
       $self->{_response_queue}->{hex($1)}->{type} = $self->{_response_queue}->{last_type};
       # TODO: we might need to re-init the stick here. Check this in real life.
-      return "no_xpl_message_required"; # We received ACK from stick, we should not send an xPL message out for this response
+      return "ack"; # We received ACK from stick, we should not send an xPL message out for this response
     } elsif ($2 eq "00C2"){
       # We sometimes get this reponse on the initial init request, re-init in this case
       $self->write("000A");
