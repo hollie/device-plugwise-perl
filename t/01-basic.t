@@ -3,7 +3,7 @@
 # Copyright (C) 2012 by Lieven Hollevoet
 
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use Data::Dumper;
 
 use_ok 'Device::Plugwise';
@@ -26,6 +26,7 @@ is $status->{short_key}, 'BABE', "... network key extracted";
 
 is $plugwise->command('on', 'ABCDEF'), 1, "... command send OK";
 is $plugwise->command('off', 'ABCDEE'), 1, "... command send OK";
+is $plugwise->queue_size(), 1, "... message queued OK";
 $msg = $plugwise->read(3);
 is @{$msg->{body}}[-1], "HIGH", "... command response OK";
 $msg = $plugwise->read(3);

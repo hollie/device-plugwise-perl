@@ -263,6 +263,19 @@ sub write {
   1;
 }
 
+=method C<queue_size()>
+
+This method reports the number of commands that are in the 
+queue to be sent to the stick.
+
+=cut
+
+sub queue_size {
+  my ($self) = @_;
+  return scalar @{$self->{_q}};
+}
+
+
 sub _write_now {
   my $self = shift;
   my $rec = shift @{$self->{_q}};
@@ -487,7 +500,7 @@ sub _process_response {
     $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} = (hex($4) - 278528) / 8;
     my $msg_type = $self->{_response_queue}->{hex($1)}->{type} || "sensor.basic" ;
 
-    my $circle_date_time = $self->tstamp2time($3);
+    my $circle_date_time = $self->_tstamp2time($3);
 
     print STDERR "PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr=" . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} . ", datetime=$circle_date_time)\n" if DEBUG;
 
@@ -636,7 +649,7 @@ the same command.
 sub command {
     my ($self, $command, $target) = @_;
 
-    print STDERR "Sending command '$command' to '$target'\n" if DEBUG;
+    print STDERR "Push to queue command '$command' to '$target'\n" if DEBUG;
 
     # Commands that have no specific device
     if ($command eq 'listcircles') {
@@ -760,6 +773,25 @@ sub _hexdump {
   $r.' '.$s;
 }
 
+# Convert a Plugwise timestamp to a human-readable format
+sub _tstamp2time {
+    my ($self, $tstamp) = @_;
+    
+    # Return empty time on empty timestamp
+    return "000000000000" if ($tstamp eq "FFFFFFFF");
+
+    # Convert
+    if ($tstamp =~ /([[:xdigit:]]{2})([[:xdigit:]]{2})([[:xdigit:]]{4})/){
+        my $circle_date    = sprintf("%04i%02i%02i", 2000+hex($1), hex($2), int(hex($3)/60/24)+1); 
+        my $circle_time    = hex($3) % (60*24);
+        my $circle_hours   = int($circle_time/60);
+        my $circle_minutes = $circle_time % 60;
+        $circle_time       = sprintf("%02i%02i", $circle_hours, $circle_minutes);
+        return $circle_date . $circle_time;
+    } else {
+        return "000000000000";
+    }
+}
 
 =head1 ACKNOWLEDGEMENTS
 
