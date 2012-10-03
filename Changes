@@ -1,10 +1,24 @@
 ==================================================
-Changes from 2011-09-21 00:00:00 +0000 to present.
+Changes from 2011-10-04 00:00:00 +0000 to present.
 ==================================================
 
-------------------------------------------
-version 0.003 at 2012-09-20 21:26:14 +0000
-------------------------------------------
+----------------------------------------
+version 0.1 at 2012-10-03 20:11:36 +0000
+----------------------------------------
+
+  Change: 9f01a6677ca982b9557de3baaf9e6512eca8fb7b
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-03 22:11:21 +0000
+
+    Applied perltidy and added a basic test based on file input so the
+    module can be tested stand-alone 
+
+  Change: 6edad8e4fe9486bffdf43d8c4f414ad3a1cc1c21
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-27 17:41:25 +0000
+
+    Added function for reading out the TX queue state and an internal
+    function for timestamp to time calculation 
 
   Change: 9d515e614241edd7f541a1bd77828bba4cf13934
   Author: Lieven Hollevoet <hollie@lika.be>
@@ -147,6 +161,16 @@ version 0.003 at 2012-09-20 21:26:14 +0000
     Initial commit 
 
 ------------------------------------------
+version 0.003 at 2012-09-20 21:26:24 +0000
+------------------------------------------
+
+  Change: 74b687d21f15c0b17bfec14cd8ad95d3daab3ea4
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-09-20 23:26:24 +0000
+
+    Build results of 9d515e6 (on master) 
+
+------------------------------------------
 version 0.002 at 2012-09-13 18:55:16 +0000
 ------------------------------------------
 
@@ -165,10 +189,6 @@ version 0.001 at 2012-09-13 06:10:50 +0000
   Date : 2012-09-13 08:10:50 +0000
 
     Build results of 4043e98 (on master) 
-
----------------------------------------------
-version 1.122570 at 2012-09-13 06:05:32 +0000
----------------------------------------------
 
   Change: 7179cbd465318523bcd7bfd1ea6247222aac1764
   Author: Lieven Hollevoet <hollie@lika.be>

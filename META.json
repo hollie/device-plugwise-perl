@@ -25,6 +25,7 @@
             "Device::SerialPort" : "0",
             "Digest::CRC" : "0",
             "Fcntl" : "0",
+            "IO::File" : "0",
             "IO::Select" : "0",
             "IO::Socket::INET" : "0",
             "Socket" : "0",
@@ -37,7 +38,6 @@
       },
       "test" : {
          "requires" : {
-            "Data::Dumper" : "0",
             "Test::More" : "0"
          }
       }
@@ -53,6 +53,6 @@
          "web" : "https://github.com/hollie/device-plugwise-perl"
       }
    },
-   "version" : "0.003"
+   "version" : "0.1"
 }
 

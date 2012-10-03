@@ -2,7 +2,7 @@ NAME
     Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 VERSION
-    version 0.003
+    version 0.1
 
 SYNOPSIS
       my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');
@@ -81,6 +81,10 @@ METHODS
     This method queues a command for sending to the connected device. The
     first write will be written immediately, subsequent writes are queued
     until a response to the previous message is received.
+
+  "queue_size()"
+    This method reports the number of commands that are in the queue to be
+    sent to the stick.
 
   "status()"
     This method returns the status of the internal _plugwise hash. This can

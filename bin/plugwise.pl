@@ -3,15 +3,32 @@
 use strict;
 use warnings;
 use Device::Plugwise;
+use IO::File;
 
-# ABSTRACT: Perl script to control Plugwise devices
+# ABSTRACT: Example Perl script to control Plugwise devices
 # PODNAME: plugwise.pl
 
-my $plugwise = Device::Plugwise->new(device => 'localhost:2500');
+
+my $stim = 't/stim/basic.txt';
+my $fh = IO::File->new( $stim, q{<} );
+
+my $plugwise = Device::Plugwise->new( device => 'localhost:2500' );
+
 $plugwise->read(3);
 
-$plugwise->command('on', 'ABCDEF');
-$plugwise->read(3);
+$plugwise->command( 'on',     'ABCDE0' );
+$plugwise->command( 'off',    'ABCDE1' );
+$plugwise->command( 'status', 'ABCDE2' );
+$plugwise->command( 'on',     'ABCDE3' );
+$plugwise->command( 'off',    'ABCDE4' );
+
+my $msg;
+
+READLOOP: do {
+    $msg = $plugwise->read(3);
+} while ( defined $msg );
+
+print "End of test code...\n";
 
 __END__
 
@@ -19,11 +36,11 @@ __END__
 
 =head1 NAME
 
-plugwise.pl - Perl script to control Plugwise devices
+plugwise.pl - Example Perl script to control Plugwise devices
 
 =head1 VERSION
 
-version 0.003
+version 0.1
 
 =head1 AUTHOR
 

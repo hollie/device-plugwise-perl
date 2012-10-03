@@ -12,7 +12,6 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl module to communicate with Plugwise hardware",
   "AUTHOR" => "Lieven Hollevoet <hollie\@cpan.org>",
   "BUILD_REQUIRES" => {
-    "Data::Dumper" => 0,
     "Test::More" => 0
   },
   "CONFIGURE_REQUIRES" => {
@@ -29,6 +28,7 @@ my %WriteMakefileArgs = (
     "Device::SerialPort" => 0,
     "Digest::CRC" => 0,
     "Fcntl" => 0,
+    "IO::File" => 0,
     "IO::Select" => 0,
     "IO::Socket::INET" => 0,
     "Socket" => 0,
@@ -38,7 +38,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.003",
+  "VERSION" => "0.1",
   "test" => {
     "TESTS" => "t/*.t"
   }
