@@ -3,17 +3,22 @@
 # Copyright (C) 2012 by Lieven Hollevoet
 
 use strict;
-use Test::More tests => 11;
-use Data::Dumper;
+use Test::More tests => 12;
 
+use_ok 'IO::File';
 use_ok 'Device::Plugwise';
 
-#my $stim = 't/stim/basic.txt';
-#open my $fh, $stim or die "Failed to open $stim: $!\n";
+# The stimulus file contains the responses
+# required to run some basic module tests
+#  * init response
+#  * response to Circle ON command
+#  * response to Circle OFF command
+my $stim = 't/stim/basic.txt';
+my $fh = IO::File->new( $stim, q{<} );
 
-#my $plugwise = Device::Plugwise->new(filehandle => $fh);
+my $plugwise = Device::Plugwise->new(filehandle => $fh);
 
-my $plugwise = Device::Plugwise->new(device => 'localhost:2500');
+#my $plugwise = Device::Plugwise->new(device => 'localhost:2500');
 ok $plugwise, 'object created';
 
 my $msg = $plugwise->read(3);
@@ -33,3 +38,4 @@ $msg = $plugwise->read(3);
 is @{$msg->{body}}[1], "ABCDEE", "... expected device ID OK";
 is @{$msg->{body}}[-1], "LOW", "... command response OK";
 
+$fh->close();
