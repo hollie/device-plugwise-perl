@@ -259,7 +259,7 @@ sub read_one {
 
     # If we received an 'ack' then we need to try to read the next message
     if ( $body eq 'ack' ) {
-        return unless ( $$rbuf =~ s/.+\x05\x05\x03\x03(\w+)\r\n// );
+        return unless ( $$rbuf =~ s/\x05\x05\x03\x03(\w+)\r\n// );
         $body = $self->_process_response($1);
     }
 
