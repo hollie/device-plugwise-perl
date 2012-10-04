@@ -84,12 +84,12 @@ sub new {
     my ( $pkg, %p ) = @_;
 
     my $self = bless {
-        _buf            => '',
-        _q              => [],
-        _response_queue => {},
-        _connected      => 0,
-        baud            => 115200,
-        device          => '',
+        _buf               => '',
+        _q                 => [],
+        _response_queue    => {},
+        _connected         => 0,
+        baud               => 115200,
+        device             => '',
         list_circles_count => 16,
         %p
     }, $pkg;
@@ -102,16 +102,17 @@ sub new {
 
     $self->_stick_init();          # connect to the USB stick
 
-	my $msg = $self->read(3);
-	
-	if ($msg ne 'connected' && !exists $p{filehandle}) {
-		croak "The device connected to $self->{device} does not appear to be a Stick";
-	}
-	
-	# Request the calibration info for the known Circles
-	# Set the 'dont_scan_network' parameter to skip this (for testing)
-	$self->_query_connected_circles() unless (exists $p{dont_scan_network});
-	
+    my $msg = $self->read(3);
+
+    if ( $msg ne 'connected' && !exists $p{filehandle} ) {
+        croak
+"The device connected to $self->{device} does not appear to be a Stick";
+    }
+
+    # Request the calibration info for the known Circles
+    # Set the 'dont_scan_network' parameter to skip this (for testing)
+    $self->_query_connected_circles() unless ( exists $p{dont_scan_network} );
+
     return $self;
 
 }
@@ -347,11 +348,9 @@ sub _process_response {
 
     print STDERR "Processing '$frame'\n" if XPL_DEBUG;
 
-	# The default message is a plugwise.basic, 
-	# can be overwritten when required.
-    my %xplmsg = (
-        schema       => 'plugwise.basic',
-    );
+    # The default message is a plugwise.basic,
+    # can be overwritten when required.
+    my %xplmsg = ( schema => 'plugwise.basic', );
 
     # Check if the CRC matches
     if (
@@ -377,38 +376,41 @@ sub _process_response {
 
 # After a command is sent to the stick, we first receive an 'ACK'. This 'ACK' contains a sequence number that we want to track and that notifies us of errors.
     if ( $frame =~ /^0000([[:xdigit:]]{4})([[:xdigit:]]{4})$/ ) {
+
         #      ack       |  seq. nr.     || response code |
         if ( $2 eq "00C1" ) {
             $self->{_response_queue}->{ hex($1) }->{received_ok} = 1;
             $self->{_response_queue}->{ hex($1) }->{type} =
               $self->{_response_queue}->{last_type};
 
-            return "ack"; 
+            return "ack";
         } elsif ( $2 eq "00C2" ) {
-        # We sometimes get this reponse on the initial init request, re-init in this case
+
+# We sometimes get this reponse on the initial init request, re-init in this case
             $self->write("000A");
             return "re-init";
         } else {
-        	carp ("Received response code with error: $frame\n");
+            carp("Received response code with error: $frame\n");
             $xplmsg{schema} = 'log.basic';
-            
+
             # Default error message
             my $text = 'Received error response';
-            
-            # Catch known errors for more user friendly feedback, we overwrite the default text in this case
+
+# Catch known errors for more user friendly feedback, we overwrite the default text in this case
             my $msg_causing_error = $self->{_waiting}[1][1];
-            
-            if ($msg_causing_error =~ /^0026([[:xdigit:]]{16}$)/){
-            	my $device = $self->_addr_l2s($1);
-            	$text = "No calibration response received for $device";
-            	# If we don't get a calibration response when we ask for it, we remove the Circle from the 
-            	# known Circles so it does not get reported when we request the list of Circles.
-            	# This can be caused when a device is removed from the network. The Circle+ remembers
-            	# the ID of the Circle that was removed, but of course the device will not respond to
-            	# calibration requests.	
-            	delete $self->{_plugwise}->{circles}->{$device};
+
+            if ( $msg_causing_error =~ /^0026([[:xdigit:]]{16}$)/ ) {
+                my $device = $self->_addr_l2s($1);
+                $text = "No calibration response received for $device";
+
+# If we don't get a calibration response when we ask for it, we remove the Circle from the
+# known Circles so it does not get reported when we request the list of Circles.
+# This can be caused when a device is removed from the network. The Circle+ remembers
+# the ID of the Circle that was removed, but of course the device will not respond to
+# calibration requests.
+                delete $self->{_plugwise}->{circles}->{$device};
             }
-            $xplmsg{body}   = [
+            $xplmsg{body} = [
                 'type' => 'err',
                 'text' => $text,
                 'code' => $self->{_waiting}[1][1] . ":" . $2
@@ -424,7 +426,9 @@ sub _process_response {
     $self->{_awaiting_stick_response} = 0;
 
     if ( $frame =~
-/^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/)
+/^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
+      )
+
 # init resp | seq. nr.|| stick MAC addr || don't care    || network key    || short key
     {
         # Extract info
@@ -443,13 +447,14 @@ sub _process_response {
     }
 
     if ( $frame =~ /^0000([[:xdigit:]]{4})00DE([[:xdigit:]]{16})$/ ) {
-    #   circle off resp  |  seq. nr.     |    | circle MAC
-        my $saddr    = $self->_addr_l2s($2);
+
+        #   circle off resp  |  seq. nr.     |    | circle MAC
+        my $saddr = $self->_addr_l2s($2);
 
         $xplmsg{body} =
-              [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'off' ];
+          [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'off' ];
 
-        # Update the response_queue, remove the entry corresponding to this reply
+       # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n"
@@ -458,11 +463,12 @@ sub _process_response {
     }
 
     if ( $frame =~ /^0000([[:xdigit:]]{4})00D8([[:xdigit:]]{16})$/ ) {
-    #   circle on resp   |  seq. nr.     |    | circle MAC
-        my $saddr    = $self->_addr_l2s($2);
+
+        #   circle on resp   |  seq. nr.     |    | circle MAC
+        my $saddr = $self->_addr_l2s($2);
 
         $xplmsg{body} =
-              [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'on' ];
+          [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'on' ];
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
@@ -535,14 +541,14 @@ sub _process_response {
             $self->{_plugwise}->{circles}->{ substr( $3, -6, 6 ) } =
               {};    # Store the last 6 digits of the MAC address for later use
                      # And immediately queue a request for calibration info
-            $self->write( "0026" . $3);
+            $self->write( "0026" . $3 );
         }
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         # Only when we have walked the complete list
-        return "no_data"
+        return "no_data";
     }
 
 # Process the response on a status request
@@ -566,15 +572,14 @@ sub _process_response {
           . ", datetime=$circle_date_time)\n"
           if DEBUG;
 
-          $xplmsg{body} = [
-                'device' => $saddr,
-                'type'   => 'output',
-                'onoff'  => $onoff,
-                'address' =>
-                  $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr},
-                'datetime' => $circle_date_time
-            ];
-        
+        $xplmsg{body} = [
+            'device' => $saddr,
+            'type'   => 'output',
+            'onoff'  => $onoff,
+            'address' =>
+              $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr},
+            'datetime' => $circle_date_time
+        ];
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
@@ -743,11 +748,11 @@ the same command.
 sub command {
     my ( $self, $command, $target ) = @_;
 
-	if (DEBUG) {
-    	print STDERR "Push to queue command '$command'";
-    	print STDERR "to '$target'" if (defined $target);
-    	print STDERR "\n";
-	}
+    if (DEBUG) {
+        print STDERR "Push to queue command '$command'";
+        print STDERR "to '$target'" if ( defined $target );
+        print STDERR "\n";
+    }
 
     my $packet = "";
 
