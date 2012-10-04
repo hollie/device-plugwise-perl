@@ -90,6 +90,7 @@ sub new {
         _connected      => 0,
         baud            => 115200,
         device          => '',
+        list_circles_count => 16,
         %p
     }, $pkg;
 
@@ -101,6 +102,16 @@ sub new {
 
     $self->_stick_init();          # connect to the USB stick
 
+	my $msg = $self->read(3);
+	
+	if ($msg ne 'connected' && !exists $p{filehandle}) {
+		croak "The device connected to $self->{device} does not appear to be a Stick";
+	}
+	
+	# Request the calibration info for the known Circles
+	# Set the 'dont_scan_network' parameter to skip this (for testing)
+	$self->_query_connected_circles() unless (exists $p{dont_scan_network});
+	
     return $self;
 
 }
@@ -116,7 +127,7 @@ sub device { shift->{device} }
 
 =method C<baud()>
 
-Returns the baud rate. Only makes sense when connected over serial.
+Returns the baud rate. Only makes sense when connected over a serial connection.
 
 =cut
 
@@ -138,6 +149,16 @@ This method returns the file handle for the device.
 =cut
 
 sub filehandle { shift->{filehandle} }
+
+=method C<list_circles_count()>
+
+This method returns the number of Circles that will be interrogated with the
+list_circles command. If you have more than 16 Circles in your network, increase
+the setting to a higher value.
+
+=cut
+
+sub list_circles_count { shift->{list_circles_count} }
 
 sub _open {
     my $self = shift;
@@ -238,7 +259,7 @@ sub read_one {
 
     # If we received an 'ack' then we need to try to read the next message
     if ( $body eq 'ack' ) {
-        return unless ( $$rbuf =~ s/\x05\x05\x03\x03(\w+)\r\n// );
+        return unless ( $$rbuf =~ s/.+\x05\x05\x03\x03(\w+)\r\n// );
         $body = $self->_process_response($1);
     }
 
@@ -326,9 +347,9 @@ sub _process_response {
 
     print STDERR "Processing '$frame'\n" if XPL_DEBUG;
 
-# The default xpl message is a plugwise.basic trig, can be overwritten when required.
+	# The default message is a plugwise.basic, 
+	# can be overwritten when required.
     my %xplmsg = (
-        message_type => 'xpl-stat',
         schema       => 'plugwise.basic',
     );
 
@@ -356,30 +377,41 @@ sub _process_response {
 
 # After a command is sent to the stick, we first receive an 'ACK'. This 'ACK' contains a sequence number that we want to track and that notifies us of errors.
     if ( $frame =~ /^0000([[:xdigit:]]{4})([[:xdigit:]]{4})$/ ) {
-
-        #      ack          |  seq. nr.     || response code |
+        #      ack       |  seq. nr.     || response code |
         if ( $2 eq "00C1" ) {
             $self->{_response_queue}->{ hex($1) }->{received_ok} = 1;
             $self->{_response_queue}->{ hex($1) }->{type} =
               $self->{_response_queue}->{last_type};
 
-       # TODO: we might need to re-init the stick here. Check this in real life.
-            return
-              "ack"
-              ; # We received ACK from stick, we should not send an xPL message out for this response
+            return "ack"; 
         } elsif ( $2 eq "00C2" ) {
-
-# We sometimes get this reponse on the initial init request, re-init in this case
+        # We sometimes get this reponse on the initial init request, re-init in this case
             $self->write("000A");
-            return "no_xpl_message_required";
+            return "re-init";
         } else {
-
-            #$xpl->ouch("Received response code with error: $frame\n");
+        	carp ("Received response code with error: $frame\n");
             $xplmsg{schema} = 'log.basic';
+            
+            # Default error message
+            my $text = 'Received error response';
+            
+            # Catch known errors for more user friendly feedback, we overwrite the default text in this case
+            my $msg_causing_error = $self->{_waiting}[1][1];
+            
+            if ($msg_causing_error =~ /^0026([[:xdigit:]]{16}$)/){
+            	my $device = $self->_addr_l2s($1);
+            	$text = "No calibration response received for $device";
+            	# If we don't get a calibration response when we ask for it, we remove the Circle from the 
+            	# known Circles so it does not get reported when we request the list of Circles.
+            	# This can be caused when a device is removed from the network. The Circle+ remembers
+            	# the ID of the Circle that was removed, but of course the device will not respond to
+            	# calibration requests.	
+            	delete $self->{_plugwise}->{circles}->{$device};
+            }
             $xplmsg{body}   = [
                 'type' => 'err',
-                'text' => "Received error response",
-                'code' => $self->{_last_pkt_to_uart} . ":" . $2
+                'text' => $text,
+                'code' => $self->{_waiting}[1][1] . ":" . $2
             ];
             delete $self->{_response_queue}->{ hex($1) };
             $self->{_awaiting_stick_response} = 0;
@@ -391,10 +423,9 @@ sub _process_response {
 
     $self->{_awaiting_stick_response} = 0;
 
-#     init response |  seq. nr.     || stick MAC addr || don't care    || network key    || short key
     if ( $frame =~
-/^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
-      )
+/^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/)
+# init resp | seq. nr.|| stick MAC addr || don't care    || network key    || short key
     {
         # Extract info
         $self->{_plugwise}->{stick_MAC}   = substr( $2, -6, 6 );
@@ -411,22 +442,14 @@ sub _process_response {
         return "connected";
     }
 
-    #   circle off resp|  seq. nr.     |    | circle MAC
     if ( $frame =~ /^0000([[:xdigit:]]{4})00DE([[:xdigit:]]{16})$/ ) {
+    #   circle off resp  |  seq. nr.     |    | circle MAC
         my $saddr    = $self->_addr_l2s($2);
-        my $msg_type = $self->{_response_queue}->{ hex($1) }->{type}
-          || "control.basic";
 
-        if ( $msg_type eq 'control.basic' ) {
-            $xplmsg{schema} = 'sensor.basic';
-            $xplmsg{body} =
-              [ 'device' => $saddr, 'type' => 'output', 'current' => 'LOW' ];
-        } else {
-            $xplmsg{body} =
+        $xplmsg{body} =
               [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'off' ];
-        }
 
-       # Update the response_queue, remove the entry corresponding to this reply
+        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n"
@@ -434,20 +457,12 @@ sub _process_response {
         return \%xplmsg;
     }
 
-    #   circle on resp |  seq. nr.     |    | circle MAC
     if ( $frame =~ /^0000([[:xdigit:]]{4})00D8([[:xdigit:]]{16})$/ ) {
+    #   circle on resp   |  seq. nr.     |    | circle MAC
         my $saddr    = $self->_addr_l2s($2);
-        my $msg_type = $self->{_response_queue}->{ hex($1) }->{type}
-          || "control.basic";
 
-        if ( $msg_type eq 'control.basic' ) {
-            $xplmsg{schema} = 'sensor.basic';
-            $xplmsg{body} =
-              [ 'device' => $saddr, 'type' => 'output', 'current' => 'HIGH' ];
-        } else {
-            $xplmsg{body} =
+        $xplmsg{body} =
               [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'on' ];
-        }
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
@@ -520,31 +535,14 @@ sub _process_response {
             $self->{_plugwise}->{circles}->{ substr( $3, -6, 6 ) } =
               {};    # Store the last 6 digits of the MAC address for later use
                      # And immediately queue a request for calibration info
-            $self->queue_packet_to_stick( "0026" . $3,
-                "Request calibration info" );
+            $self->write( "0026" . $3);
         }
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         # Only when we have walked the complete list
-        return "no_xpl_message_required"
-          if ( $4 ne
-            sprintf( "%02X", $self->{_plugwise}->{list_circles_count} - 1 ) );
-
-        my @xpl_body = ( 'command' => 'listcircles' );
-        my $count = 0;
-
-        foreach my $device_id ( keys %{ $self->{_plugwise}->{circles} } ) {
-            my $device_string = sprintf( "device%02i", $count++ );
-            push @xpl_body, ( $device_string => $device_id );
-        }
-
-        # Construct the complete xpl message
-        $xplmsg{body}         = [@xpl_body];
-        $xplmsg{message_type} = 'xpl-stat';
-
-        return \%xplmsg;
+        return "no_data"
     }
 
 # Process the response on a status request
@@ -559,8 +557,6 @@ sub _process_response {
         $self->{_plugwise}->{circles}->{$saddr}->{onoff} = $onoff;
         $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} =
           ( hex($4) - 278528 ) / 8;
-        my $msg_type = $self->{_response_queue}->{ hex($1) }->{type}
-          || "sensor.basic";
 
         my $circle_date_time = $self->_tstamp2time($3);
 
@@ -570,12 +566,7 @@ sub _process_response {
           . ", datetime=$circle_date_time)\n"
           if DEBUG;
 
-        if ( $msg_type eq 'sensor.basic' ) {
-            $xplmsg{schema} = $msg_type;
-            $xplmsg{body} =
-              [ 'device' => $saddr, 'type' => 'output', 'current' => $current ];
-        } else {
-            $xplmsg{body} = [
+          $xplmsg{body} = [
                 'device' => $saddr,
                 'type'   => 'output',
                 'onoff'  => $onoff,
@@ -583,7 +574,7 @@ sub _process_response {
                   $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr},
                 'datetime' => $circle_date_time
             ];
-        }
+        
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
@@ -617,7 +608,7 @@ sub _process_response {
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
-        return "no_xpl_message_required";
+        return "no_data";
     }
 
     # Process the response on a historic buffer readout
@@ -691,7 +682,7 @@ sub _process_response {
 
 # We should not get here unless we receive responses that are not implemented...
 #$xpl->ouch("Received unknown response: '$frame'");
-    return "no_xpl_message_required";
+    return "no_data";
 
 }
 
@@ -712,6 +703,8 @@ Hash entries include
 
 =item short_key   : Short version of the network ID
 
+=item circles     : List of IDs of Circles that have responded to a calibration request and that hence are known to be active on the wireless network
+
 =back
 
 =cut
@@ -724,14 +717,6 @@ sub status {
 =method C<command($command, $target)>
 
 This method sends a command to the stick.
-
-Supported C<$command>s without a target id are:
-
-=over
-
-=item listcircles : get a list of connected Circles, respond with their ID's
-
-=back
 
 Supported C<$command>s with a target id are:
 
@@ -758,14 +743,11 @@ the same command.
 sub command {
     my ( $self, $command, $target ) = @_;
 
-    print STDERR "Push to queue command '$command' to '$target'\n" if DEBUG;
-
-    # Commands that have no specific device
-    if ( $command eq 'listcircles' ) {
-
-        #$self->_query_connected_circles();
-        return 1;
-    }
+	if (DEBUG) {
+    	print STDERR "Push to queue command '$command'";
+    	print STDERR "to '$target'" if (defined $target);
+    	print STDERR "\n";
+	}
 
     my $packet = "";
 
@@ -849,11 +831,10 @@ sub _query_connected_circles {
     $self->{_plugwise}->{circles}->{ $self->{_plugwise}->{coordinator_MAC} } =
       {};                                  # Add entry for Circle+
     $self->write(
-        "0026" . $self->_addr_s2l( $self->{_plugwise}->{coordinator_MAC} ) )
-      ;    #, "Calibration request for Circle+");
+        "0026" . $self->_addr_s2l( $self->{_plugwise}->{coordinator_MAC} ) );
 
     # Interrogate the first x connected devices
-    while ( $index < $self->{_plugwise}->{list_circles_count} ) {
+    while ( $index < $self->{list_circles_count} ) {
         my $strindex = sprintf( "%02X", $index++ );
         my $packet = "0018"
           . $self->_addr_s2l( $self->{_plugwise}->{coordinator_MAC} )
