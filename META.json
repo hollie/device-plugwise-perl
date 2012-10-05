@@ -22,16 +22,19 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
+            "Data::Dumper" : "0",
             "Device::SerialPort" : "0",
             "Digest::CRC" : "0",
             "Fcntl" : "0",
             "IO::File" : "0",
             "IO::Select" : "0",
             "IO::Socket::INET" : "0",
+            "Math::Round" : "0",
             "Socket" : "0",
             "Symbol" : "0",
             "Time::HiRes" : "0",
             "constant" : "0",
+            "perl" : "v5.10.0",
             "strict" : "0",
             "warnings" : "0"
          }
@@ -53,6 +56,6 @@
          "web" : "https://github.com/hollie/device-plugwise-perl"
       }
    },
-   "version" : "0.1"
+   "version" : "0.2"
 }
 

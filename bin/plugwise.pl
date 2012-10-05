@@ -1,34 +1,46 @@
 #! /usr/bin/perl -w
 
+use v5.10;
 use strict;
 use warnings;
 use Device::Plugwise;
+use Data::Dumper;
 use IO::File;
 
 # ABSTRACT: Example Perl script to control Plugwise devices
 # PODNAME: plugwise.pl
+#
+# Usage: plugwise.pl <device> <command> <target>
+# Possible commands are the commands detailed in the Plugwise module
+# documentation, plus some convenience functions like 'listcircles'
 
+if ( scalar @ARGV < 2 ) {
+    die "Please pass device and command as parameters";
+}
+my $device  = $ARGV[0];
+my $command = $ARGV[1];
 
-my $stim = 't/stim/basic.txt';
-my $fh = IO::File->new( $stim, q{<} );
+print "Sending $command...";
 
-my $plugwise = Device::Plugwise->new( device => 'localhost:2500' );
-
-$plugwise->read(3);
-
-$plugwise->command( 'on',     'ABCDE0' );
-$plugwise->command( 'off',    'ABCDE1' );
-$plugwise->command( 'status', 'ABCDE2' );
-$plugwise->command( 'on',     'ABCDE3' );
-$plugwise->command( 'off',    'ABCDE4' );
-
+my $plugwise = Device::Plugwise->new( device => $device );
 my $msg;
 
-READLOOP: do {
-    $msg = $plugwise->read(3);
-} while ( defined $msg );
+if ( $command eq 'listcircles' ) {
+    my $status = $plugwise->status();
+    say "Known Circles on the network are:";
+    foreach ( keys %{ $status->{circles} } ) {
+        say $_;
+    }
+    exit(0);
+}
 
-print "End of test code...\n";
+$plugwise->command( $command, $ARGV[2] );
+
+# Ensure to process all reads
+PROCESS_READS: do {
+    $msg = $plugwise->read(2);
+    print "Response: " . Dumper($msg) if defined $msg;
+} while ( defined $msg );
 
 __END__
 
@@ -40,7 +52,7 @@ plugwise.pl - Example Perl script to control Plugwise devices
 
 =head1 VERSION
 
-version 0.1
+version 0.2
 
 =head1 AUTHOR
 

@@ -16,13 +16,12 @@ use_ok 'Device::Plugwise';
 my $stim = 't/stim/basic.txt';
 my $fh = IO::File->new( $stim, q{<} );
 
-my $plugwise = Device::Plugwise->new(filehandle => $fh);
+isnt($fh, undef, '... stimulus file exists');
+
+my $plugwise = Device::Plugwise->new(filehandle => $fh, dont_scan_network => 1);
 
 #my $plugwise = Device::Plugwise->new(device => 'localhost:2500');
 ok $plugwise, 'object created';
-
-my $msg = $plugwise->read(3);
-is $msg, 'connected', '... connected';
 
 my $status = $plugwise->status();
 
@@ -32,10 +31,10 @@ is $status->{short_key}, 'BABE', "... network key extracted";
 is $plugwise->command('on', 'ABCDEF'), 1, "... command send OK";
 is $plugwise->command('off', 'ABCDEE'), 1, "... command send OK";
 is $plugwise->queue_size(), 1, "... message queued OK";
-$msg = $plugwise->read(3);
-is @{$msg->{body}}[-1], "HIGH", "... command response OK";
+my $msg = $plugwise->read(3);
+is @{$msg->{body}}[-1], "on", "... command response OK";
 $msg = $plugwise->read(3);
 is @{$msg->{body}}[1], "ABCDEE", "... expected device ID OK";
-is @{$msg->{body}}[-1], "LOW", "... command response OK";
+is @{$msg->{body}}[-1], "off", "... command response OK";
 
 $fh->close();

@@ -6,6 +6,7 @@ META.yml
 Makefile.PL
 README
 bin/plugwise.pl
+bin/plugwise_demo.pl
 dist.ini
 lib/Device/Plugwise.pm
 t/01-basic.t

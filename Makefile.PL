@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-
+use 5.010000;
 
 use ExtUtils::MakeMaker 6.30;
 
@@ -19,18 +19,21 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "Device-Plugwise",
   "EXE_FILES" => [
-    "bin/plugwise.pl"
+    "bin/plugwise.pl",
+    "bin/plugwise_demo.pl"
   ],
   "LICENSE" => "perl",
   "NAME" => "Device::Plugwise",
   "PREREQ_PM" => {
     "Carp" => 0,
+    "Data::Dumper" => 0,
     "Device::SerialPort" => 0,
     "Digest::CRC" => 0,
     "Fcntl" => 0,
     "IO::File" => 0,
     "IO::Select" => 0,
     "IO::Socket::INET" => 0,
+    "Math::Round" => 0,
     "Socket" => 0,
     "Symbol" => 0,
     "Time::HiRes" => 0,
@@ -38,7 +41,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "0.1",
+  "VERSION" => "0.2",
   "test" => {
     "TESTS" => "t/*.t"
   }

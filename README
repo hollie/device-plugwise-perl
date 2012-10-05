@@ -2,7 +2,7 @@ NAME
     Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 VERSION
-    version 0.1
+    version 0.2
 
 SYNOPSIS
       my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');
@@ -53,7 +53,8 @@ METHODS
     provided this method will return undef.
 
   "baud()"
-    Returns the baud rate. Only makes sense when connected over serial.
+    Returns the baud rate. Only makes sense when connected over a serial
+    connection.
 
   "port()"
     Returns the TCP port for the device. Only makes sense when using this
@@ -61,6 +62,11 @@ METHODS
 
   "filehandle()"
     This method returns the file handle for the device.
+
+  "list_circles_count()"
+    This method returns the number of Circles that will be interrogated with
+    the list_circles command. If you have more than 16 Circles in your
+    network, increase the setting to a higher value.
 
   "read([$timeout])"
     This method blocks until a new message has been received by the device.
@@ -95,13 +101,11 @@ METHODS
     stick_MAC : Zigbee MAC address of the stick
     network_key : Full zigbee network ID
     short_key : Short version of the network ID
+    circles : List of IDs of Circles that have responded to a calibration
+    request and that hence are known to be active on the wireless network
 
   "command($command, $target)"
     This method sends a command to the stick.
-
-    Supported $commands without a target id are:
-
-    listcircles : get a list of connected Circles, respond with their ID's
 
     Supported $commands with a target id are:
 

@@ -1,10 +1,42 @@
 ==================================================
-Changes from 2011-10-04 00:00:00 +0000 to present.
+Changes from 2011-10-06 00:00:00 +0000 to present.
 ==================================================
 
 ----------------------------------------
-version 0.1 at 2012-10-03 20:11:36 +0000
+version 0.2 at 2012-10-05 19:37:42 +0000
 ----------------------------------------
+
+  Change: f8fc9c4b868eeb993a33436085fa3f6092a5161a
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-05 21:37:24 +0000
+
+    Added a demo script that shows off some features of the module. 
+
+  Change: c15c49985b5d8c9c18e078ab07fc947e4d9e5519
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-05 21:36:14 +0000
+
+    Added support for reading the live power status 
+
+  Change: a05e98194f8481b9f2ee3ffca1e91a706d8581a8
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-04 23:12:29 +0000
+
+    Release testing OK 
+
+  Change: 56894b3b567f62a3bba9a191b1c7ad62f5523fea
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-04 23:06:00 +0000
+
+    Test is fcuntional again 
+
+  Change: e493dc4e0549c996932ddeaacfe5e3218e38fd48
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-04 22:47:48 +0000
+
+    The module now queries the known circles at startup. Removed some
+    xPL-specific code from the module. That code should go into the
+    application that brdges the interface to xPL 
 
   Change: 9f01a6677ca982b9557de3baaf9e6512eca8fb7b
   Author: Lieven Hollevoet <hollie@lika.be>
@@ -159,6 +191,16 @@ version 0.1 at 2012-10-03 20:11:36 +0000
   Date : 2012-09-11 12:45:46 +0000
 
     Initial commit 
+
+----------------------------------------
+version 0.1 at 2012-10-03 20:11:46 +0000
+----------------------------------------
+
+  Change: bb53230fe703783cc86bc17cf42bf71ae8a10ced
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-03 22:11:46 +0000
+
+    Build results of 9f01a66 (on master) 
 
 ------------------------------------------
 version 0.003 at 2012-09-20 21:26:24 +0000
