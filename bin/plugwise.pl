@@ -9,25 +9,35 @@ use IO::File;
 
 # ABSTRACT: Example Perl script to control Plugwise devices
 # PODNAME: plugwise.pl
+#
+# Usage: plugwise.pl <device> <command> <target>
+# Possible commands are the commands detailed in the Plugwise module
+# documentation, plus some convenience functions like 'listcircles'
 
-my $device = '/dev/ttyUSB0';
+if ( scalar @ARGV < 2 ) {
+    die "Please pass device and command as parameters";
+}
+my $device  = $ARGV[0];
+my $command = $ARGV[1];
+
+print "Sending $command...";
 
 my $plugwise = Device::Plugwise->new( device => $device );
-
 my $msg;
-my $status;
 
-# Generate status requests for all known Circles
-$status = $plugwise->status();
-
-foreach ( keys %{ $status->{circles} } ) {
-    $plugwise->command( 'status', $_ );
+if ( $command eq 'listcircles' ) {
+    my $status = $plugwise->status();
+    say "Known Circles on the network are:";
+    foreach ( keys %{ $status->{circles} } ) {
+        say $_;
+    }
+    exit(0);
 }
 
-READLOOP: do {
-    $msg = $plugwise->read(3);
-    print Dumper ($msg) if ( defined $msg );
+$plugwise->command( $command, $ARGV[2] );
+
+# Ensure to process all reads
+PROCESS_READS: do {
+    $msg = $plugwise->read(2);
+    print "Response: " . Dumper($msg) if defined $msg;
 } while ( defined $msg );
-
-print "End of test code...\n";
-

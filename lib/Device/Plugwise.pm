@@ -11,6 +11,7 @@ use Socket;
 use Symbol qw(gensym);
 use Time::HiRes;
 use Digest::CRC qw(crc);
+use Math::Round;
 
 #use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
 use constant DEBUG     => 1;  # Print debug information on the module itself
@@ -104,14 +105,21 @@ sub new {
 
     my $msg = $self->read(3);
 
-    if ( $msg ne 'connected' && !exists $p{filehandle} ) {
+    if ( !defined($msg) || ( $msg ne 'connected' && !exists $p{filehandle} ) ) {
         croak
 "The device connected to $self->{device} does not appear to be a Stick";
     }
 
     # Request the calibration info for the known Circles
     # Set the 'dont_scan_network' parameter to skip this (for testing)
-    $self->_query_connected_circles() unless ( exists $p{dont_scan_network} );
+    return $self if ( exists $p{dont_scan_network} );
+
+    $self->_query_connected_circles();
+
+    # And ensure all initialization commands in the queue are processed
+  PROCESS_QUEUE: do {
+        $msg = $self->read(3);
+    } while ( defined $msg );
 
     return $self;
 
@@ -378,6 +386,9 @@ sub _process_response {
     if ( $frame =~ /^0000([[:xdigit:]]{4})([[:xdigit:]]{4})$/ ) {
 
         #      ack       |  seq. nr.     || response code |
+
+        my $seqnr = $1;
+
         if ( $2 eq "00C1" ) {
             $self->{_response_queue}->{ hex($1) }->{received_ok} = 1;
             $self->{_response_queue}->{ hex($1) }->{type} =
@@ -386,7 +397,8 @@ sub _process_response {
             return "ack";
         } elsif ( $2 eq "00C2" ) {
 
-# We sometimes get this reponse on the initial init request, re-init in this case
+            # We sometimes get this reponse on the initial init
+            # request, re-init in this case
             $self->write("000A");
             return "re-init";
         } else {
@@ -394,9 +406,11 @@ sub _process_response {
             $xplmsg{schema} = 'log.basic';
 
             # Default error message
-            my $text = 'Received error response';
+            my $text  = 'Received error response';
+            my $error = $2;
 
-# Catch known errors for more user friendly feedback, we overwrite the default text in this case
+            # Catch known errors for more user friendly feedback,
+            # we overwrite the default text in this case
             my $msg_causing_error = $self->{_waiting}[1][1];
 
             if ( $msg_causing_error =~ /^0026([[:xdigit:]]{16}$)/ ) {
@@ -413,9 +427,9 @@ sub _process_response {
             $xplmsg{body} = [
                 'type' => 'err',
                 'text' => $text,
-                'code' => $self->{_waiting}[1][1] . ":" . $2
+                'code' => $self->{_waiting}[1][1] . ":" . $error
             ];
-            delete $self->{_response_queue}->{ hex($1) };
+            delete $self->{_response_queue}->{ hex($seqnr) };
             $self->{_awaiting_stick_response} = 0;
 
             return \%xplmsg;
@@ -509,7 +523,7 @@ sub _process_response {
         }
 
         # Calculate the live power
-        my ( $pow1, $pow8 ) = $self->calc_live_power($saddr);
+        my ( $pow1, $pow8 ) = $self->_calc_live_power($saddr);
 
        # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
@@ -746,7 +760,14 @@ the same command.
 =cut
 
 sub command {
-    my ( $self, $command, $target ) = @_;
+    my ( $self, $command, $target, $parameter ) = @_;
+
+    if ( !defined($command) || !defined($target) ) {
+        carp(
+"A command to the stick needs a command and a target ID as parameter"
+        );
+        return 0;
+    }
 
     if (DEBUG) {
         print STDERR "Push to queue command '$command'";
@@ -786,19 +807,36 @@ sub command {
                 }
                 $packet = "0012" . $self->_addr_s2l($circle);
 
-     #} elsif ($command eq 'history') {
-     # Ensure we have the calibration readings before we send the read command
-     # because the processing of the response of the read command required the
-     # calibration readings output to calculate the actual power
-     # if (!defined($self->{_plugwise}->{circles}->{$circle}->{offruis})) {
-     #     my $longaddr = $self->_addr_s2l($circle);
-     #     $self->write("0026". $longaddr); #, "Request calibration info");
-     # }
-     # my $address = $msg->field('address') * 8 + 278528;
-     # $packet = "0048" . $self->_addr_s2l($circle) . sprintf("%08X", $address);
-            } else {
+            } elsif ( $command eq 'history' ) {
 
-                #$xpl->info("internal: Received invalid command '$command'\n");
+       # Ensure we have the calibration readings before we send the read command
+       # because the processing of the response of the read command required the
+       # calibration readings output to calculate the actual power
+                if (
+                    !defined(
+                        $self->{_plugwise}->{circles}->{$circle}->{offruis}
+                    )
+                  )
+                {
+                    my $longaddr = $self->_addr_s2l($circle);
+                    $self->write( "0026" . $longaddr )
+                      ;    #, "Request calibration info");
+                }
+
+                if ( !defined $parameter ) {
+                    carp(
+"The 'history' command needs both a Circle ID and an address to read..."
+                    );
+                    return 0;
+                }
+
+                my $address = $parameter * 8 + 278528;
+                $packet = "0048"
+                  . $self->_addr_s2l($circle)
+                  . sprintf( "%08X", $address );
+            } else {
+                croak("Received invalid command '$command'\n");
+                return 0;
             }
 
             # Send the packet to the stick!
@@ -906,6 +944,52 @@ sub _tstamp2time {
     } else {
         return "000000000000";
     }
+}
+
+# Calculate the live power consumption from the last report.
+sub _calc_live_power {
+    my ( $self, $id ) = @_;
+
+    #my ($pulse1, $pulse8) = $self->pulsecorrection($id);
+    my $pulse1 =
+      $self->_pulsecorrection( $id,
+        hex( $self->{_plugwise}->{circles}->{$id}->{pulse1} ) );
+    my $pulse8 =
+      $self->_pulsecorrection( $id,
+        hex( $self->{_plugwise}->{circles}->{$id}->{pulse8} ) / 8 );
+
+    my $live1 = $pulse1 * 1000 / 468.9385193;
+    my $live8 = $pulse8 * 1000 / 468.9385193;
+
+    # Round
+    $live1 = round($live1);
+    $live8 = round($live8);
+
+    return ( $live1, $live8 );
+
+}
+
+# Correct the reported number of pulses based on the calibration values
+sub _pulsecorrection {
+    my ( $self, $id, $pulses ) = @_;
+
+    # Get the calibration values for the circle
+    my $offnoise = $self->{_plugwise}->{circles}->{$id}->{offruis};
+    my $offtot   = $self->{_plugwise}->{circles}->{$id}->{offtot};
+    my $gainA    = $self->{_plugwise}->{circles}->{$id}->{gainA};
+    my $gainB    = $self->{_plugwise}->{circles}->{$id}->{gainB};
+
+    # Correct the pulses with the calibration data
+    my $out =
+      ( ( $pulses + $offnoise ) ^ 2 ) * $gainB +
+      ( ( $pulses + $offnoise ) * $gainA ) +
+      $offtot;
+
+    # Never report negative values, can happen with really small values
+    $out = 0 if ( $out < 0 );
+
+    return $out;
+
 }
 
 =head1 ACKNOWLEDGEMENTS
