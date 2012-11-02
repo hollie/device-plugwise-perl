@@ -1,10 +1,28 @@
 ==================================================
-Changes from 2011-10-06 00:00:00 +0000 to present.
+Changes from 2011-11-03 00:00:00 +0000 to present.
 ==================================================
 
 ----------------------------------------
-version 0.2 at 2012-10-05 19:37:42 +0000
+version 0.3 at 2012-11-02 20:37:41 +0000
 ----------------------------------------
+
+  Change: b0e2c21552056394a628cbdb6f1626c807a45a33
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-11-02 21:30:58 +0000
+
+    Fixed EOL errors detected by release testing 
+
+  Change: bcdeb67f8c2de0715daf689462097e9a794276f5
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-11-02 21:23:49 +0000
+
+    Upped version number for first release to CPAN 
+
+  Change: 1179ec9df32862dcec6f2bb8c99d8eca9f2c765b
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-11-02 21:23:18 +0000
+
+    Tested demo scripts on actual hardware, added some documentation 
 
   Change: f8fc9c4b868eeb993a33436085fa3f6092a5161a
   Author: Lieven Hollevoet <hollie@lika.be>
@@ -191,6 +209,16 @@ version 0.2 at 2012-10-05 19:37:42 +0000
   Date : 2012-09-11 12:45:46 +0000
 
     Initial commit 
+
+----------------------------------------
+version 0.2 at 2012-10-05 19:37:51 +0000
+----------------------------------------
+
+  Change: b3d2120cbca3ed05f184d58dd809f17a83d07cbf
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-10-05 21:37:51 +0000
+
+    Build results of f8fc9c4 (on master) 
 
 ----------------------------------------
 version 0.1 at 2012-10-03 20:11:46 +0000

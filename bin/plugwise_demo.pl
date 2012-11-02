@@ -10,7 +10,10 @@ use IO::File;
 # ABSTRACT: Example Perl script to control Plugwise devices
 # PODNAME: plugwise.pl
 
-my $device = '/dev/ttyUSB0';
+if ( scalar @ARGV < 1 ) {
+    die "Please pass device name as command line parameter";
+}
+my $device = $ARGV[0];
 
 my $plugwise = Device::Plugwise->new( device => $device );
 
@@ -41,7 +44,21 @@ plugwise.pl - Example Perl script to control Plugwise devices
 
 =head1 VERSION
 
-version 0.2
+version 0.3
+
+=head1 SYNOPSIS
+
+  This script is a basic demonstration of the Device::Plugwise module.
+  To use it, start it as follows:
+
+    ./plugwise_demo.pl <stick_serial_port>
+
+  It should respond telling you it got a valid response on the init
+  request, and it should start receiving calibration responses from
+  active circles.
+
+  After the calibration responses are received, the status of the
+  active circles in the network should be printed.
 
 =head1 AUTHOR
 

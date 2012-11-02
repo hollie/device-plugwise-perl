@@ -8,12 +8,12 @@ README
 bin/plugwise.pl
 bin/plugwise_demo.pl
 dist.ini
+dist.ini~
 lib/Device/Plugwise.pm
 t/01-basic.t
 t/author-critic.t
 t/release-common_spelling.t
 t/release-eol.t
-t/release-kwalitee.t
 t/release-no-tabs.t
 t/release-pod-coverage.t
 t/release-pod-linkcheck.t
