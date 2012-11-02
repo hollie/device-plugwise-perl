@@ -41,12 +41,12 @@ PROCESS_READS: do {
 =head1 SYNOPSIS
 
   This script enables simple control of individual Circles as follows
-  
+
     ./plugwise.pl <device> <command> <target>
-    
+
   Example:
     ./plugwise.pl /dev/ttyUSB0 on ABCDEF
-    
+
     will switch circles with address ABCDEF on
-      
+
 =cut
