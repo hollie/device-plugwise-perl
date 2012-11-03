@@ -48,7 +48,7 @@ plugwise.pl - Example Perl script to control Plugwise devices
 
 =head1 VERSION
 
-version 0.3
+version 0.4.1
 
 =head1 SYNOPSIS
 

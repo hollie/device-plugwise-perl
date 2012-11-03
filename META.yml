@@ -33,4 +33,4 @@ requires:
 resources:
   bugtracker: https://github.com/hollie/device-plugwise-perl/issues
   repository: git://github.com/hollie/device-plugwise-perl.git
-version: 0.3
+version: 0.4.1

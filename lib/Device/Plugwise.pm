@@ -3,7 +3,7 @@ use warnings;
 
 package Device::Plugwise;
 {
-  $Device::Plugwise::VERSION = '0.3';
+  $Device::Plugwise::VERSION = '0.4.1';
 }
 
 use Carp qw/croak carp/;
@@ -16,10 +16,13 @@ use Time::HiRes;
 use Digest::CRC qw(crc);
 use Math::Round;
 
-#use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
-use constant DEBUG     => 1;  # Print debug information on the module itself
-use constant XPL_DEBUG => 0;  # Print debug information on the plugwise protocol
-use constant PHY_DEBUG => 0;  # Print debug information on the physical link
+use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
+use constant XPL_DEBUG => $ENV{DEVICE_PLUGWISE_XPL_DEBUG};
+use constant PHY_DEBUG => $ENV{DEVICE_PLUGWISE_PHY_DEBUG};
+
+#use constant DEBUG     => 1;  # Print debug information on the module itself
+#use constant XPL_DEBUG => 0;  # Print debug information on the plugwise protocol
+#use constant PHY_DEBUG => 0;  # Print debug information on the physical link
 
 # ABSTRACT: Perl module to communicate with Plugwise hardware
 
@@ -841,7 +844,7 @@ Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 =head1 VERSION
 
-version 0.3
+version 0.4.1
 
 =head1 SYNOPSIS
 
@@ -992,7 +995,7 @@ Supported C<$command>s with a target id are:
 
 =item livepower : request the current power measured by the Circle
 
-=item history   : TODO: request the energy consumption for a specific logaddress
+=item history   : request the energy consumption for a specific logaddress
 
 =back
 

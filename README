@@ -2,7 +2,7 @@ NAME
     Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 VERSION
-    version 0.3
+    version 0.4.1
 
 SYNOPSIS
       my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');
@@ -114,7 +114,7 @@ METHODS
     status : request the current switch state, internal clock, live power
     consumption
     livepower : request the current power measured by the Circle
-    history : TODO: request the energy consumption for a specific logaddress
+    history : request the energy consumption for a specific logaddress
 
     $target can either be a single short hardware MAC address or a
     comma-separated list of devices if multiple devices need to receive the
