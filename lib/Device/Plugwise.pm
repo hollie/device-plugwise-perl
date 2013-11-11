@@ -13,7 +13,7 @@ use Time::HiRes;
 use Digest::CRC qw(crc);
 use Math::Round;
 
-use constant DEBUG => $ENV{DEVICE_PLUGWISE_DEBUG};
+use constant DEBUG     => $ENV{DEVICE_PLUGWISE_DEBUG};
 use constant XPL_DEBUG => $ENV{DEVICE_PLUGWISE_XPL_DEBUG};
 use constant PHY_DEBUG => $ENV{DEVICE_PLUGWISE_PHY_DEBUG};
 
@@ -99,18 +99,20 @@ sub new {
     }, $pkg;
 
     if ( exists $p{filehandle} ) {    # do not open device when a filehandle
-        delete $self->{device};    #  was defined (this is for testing purposes)
-    } else {
+        delete $self->{device};  #  was defined (this is for testing purposes)
+    }
+    else {
         $self->_open();
     }
 
-    $self->_stick_init();          # connect to the USB stick
+    $self->_stick_init();        # connect to the USB stick
 
     my $msg = $self->read(3);
 
-    if ( !defined($msg) || ( $msg ne 'connected' && !exists $p{filehandle} ) ) {
+    if ( !defined($msg) || ( $msg ne 'connected' && !exists $p{filehandle} ) )
+    {
         croak
-"The device connected to $self->{device} does not appear to be a Stick";
+            "The device connected to $self->{device} does not appear to be a Stick";
     }
 
     # Request the calibration info for the known Circles
@@ -120,7 +122,7 @@ sub new {
     $self->_query_connected_circles();
 
     # And ensure all initialization commands in the queue are processed
-  PROCESS_QUEUE: do {
+PROCESS_QUEUE: do {
         $msg = $self->read(3);
     } while ( defined $msg );
 
@@ -176,7 +178,8 @@ sub _open {
     my $self = shift;
     if ( $self->{device} =~ m![/\\]! ) {
         $self->_open_serial_port(@_);
-    } else {
+    }
+    else {
         if ( $self->{device} eq 'discover' ) {
             my $devices = $self->discover;
             my ( $ip, $port ) = @{ $devices->[0] };
@@ -197,7 +200,7 @@ sub _open_tcp_port {
         $self->{port} = $1;
     }
     my $fh = IO::Socket::INET->new( $dev . ':' . $self->port )
-      or croak "TCP connect to '$dev' failed: $!";
+        or croak "TCP connect to '$dev' failed: $!";
     return $self->{filehandle} = $fh;
 }
 
@@ -206,7 +209,7 @@ sub _open_serial_port {
     $self->{type} = 'ISCP';
     my $fh = gensym();
     my $s = tie( *$fh, 'Device::SerialPort', $self->{device} )
-      || croak "Could not tie serial port to file handle: $!\n";
+        || croak "Could not tie serial port to file handle: $!\n";
     $s->baudrate( $self->baud );
     $s->databits(8);
     $s->parity("none");
@@ -215,7 +218,7 @@ sub _open_serial_port {
     $s->write_settings();
 
     sysopen( $fh, $self->{device}, O_RDWR | O_NOCTTY | O_NDELAY )
-      or croak "open of '" . $self->{device} . "' failed: $!\n";
+        or croak "open of '" . $self->{device} . "' failed: $!\n";
     $fh->autoflush(1);
     return $self->{filehandle} = $fh;
 }
@@ -234,7 +237,7 @@ sub read {
     return $res if ( defined $res );
     my $fh  = $self->filehandle;
     my $sel = IO::Select->new($fh);
-  READ_RESPONSE: do {
+READ_RESPONSE: do {
         my $start = $self->_time_now;
         $sel->can_read($timeout) or return;
         my $bytes = sysread $fh, $self->{_buf}, 2048, length $self->{_buf};
@@ -243,7 +246,7 @@ sub read {
         croak defined $bytes ? 'closed' : 'error: ' . $! unless ($bytes);
         $res = $self->read_one( \$self->{_buf} );
         $self->_write_now()
-          if ( defined $res && !$self->{_awaiting_stick_response} );
+            if ( defined $res && !$self->{_awaiting_stick_response} );
         return $res if ( defined $res );
     } while (1);
 }
@@ -275,7 +278,8 @@ sub read_one {
         $body = $self->_process_response($1);
     }
 
-    $self->_write_now unless ( $no_write || $self->{_awaiting_stick_response} );
+    $self->_write_now
+        unless ( $no_write || $self->{_awaiting_stick_response} );
     return $body;
 
 }
@@ -364,12 +368,10 @@ sub _process_response {
     my %xplmsg = ( schema => 'plugwise.basic', );
 
     # Check if the CRC matches
-    if (
-        !(
-            $self->_plugwise_crc( substr( $frame, 0, -4 ) ) eq
+    if (!(  $self->_plugwise_crc( substr( $frame, 0, -4 ) ) eq
             substr( $frame, -4, 4 )
         )
-      )
+        )
     {
         # Send out notification...
         #$xpl->ouch("PLUGWISE: received a frame with an invalid CRC");
@@ -394,17 +396,19 @@ sub _process_response {
 
         if ( $2 eq "00C1" ) {
             $self->{_response_queue}->{ hex($1) }->{received_ok} = 1;
-            $self->{_response_queue}->{ hex($1) }->{type} =
-              $self->{_response_queue}->{last_type};
+            $self->{_response_queue}->{ hex($1) }->{type}
+                = $self->{_response_queue}->{last_type};
 
             return "ack";
-        } elsif ( $2 eq "00C2" ) {
+        }
+        elsif ( $2 eq "00C2" ) {
 
             # We sometimes get this reponse on the initial init
             # request, re-init in this case
             $self->write("000A");
             return "re-init";
-        } else {
+        }
+        else {
             carp("Received response code with error: $frame\n");
             $xplmsg{schema} = 'log.basic';
 
@@ -442,9 +446,9 @@ sub _process_response {
 
     $self->{_awaiting_stick_response} = 0;
 
-    if ( $frame =~
-/^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
-      )
+    if ( $frame
+        =~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
+        )
 
 # init resp | seq. nr.|| stick MAC addr || don't care    || network key    || short key
     {
@@ -454,12 +458,12 @@ sub _process_response {
         $self->{_plugwise}->{short_key}   = $5;
         $self->{_plugwise}->{connected}   = 1;
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         print STDERR
-"PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n"
-          if DEBUG;
+            "PLUGWISE: Received a valid response to the init request from the Stick. Connected!\n"
+            if DEBUG;
         return "connected";
     }
 
@@ -468,14 +472,16 @@ sub _process_response {
         #   circle off resp  |  seq. nr.     |    | circle MAC
         my $saddr = $self->_addr_l2s($2);
 
-        $xplmsg{body} =
-          [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'off' ];
+        $xplmsg{body}
+            = [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'off' ];
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
-        print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is OFF\n"
-          if DEBUG;
+        print STDERR "PLUGWISE: Stick reported Circle "
+            . $saddr
+            . " is OFF\n"
+            if DEBUG;
         return \%xplmsg;
     }
 
@@ -484,21 +490,21 @@ sub _process_response {
         #   circle on resp   |  seq. nr.     |    | circle MAC
         my $saddr = $self->_addr_l2s($2);
 
-        $xplmsg{body} =
-          [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'on' ];
+        $xplmsg{body}
+            = [ 'device' => $saddr, 'type' => 'output', 'onoff' => 'on' ];
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
         print STDERR "PLUGWISE: Stick reported Circle " . $saddr . " is ON\n"
-          if DEBUG;
+            if DEBUG;
         return \%xplmsg;
     }
 
 # Process the response on a powerinfo request
 # powerinfo resp   |  seq. nr.     ||  Circle MAC    || pulse1        || pulse8        | other stuff we don't care about
-    if ( $frame =~
-/^0013([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{4})/
-      )
+    if ( $frame
+        =~ /^0013([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{4})/
+        )
     {
         my $saddr  = $self->_addr_l2s($2);
         my $pulse1 = $3;
@@ -517,7 +523,7 @@ sub _process_response {
             $xplmsg{body}   = [
                 'type' => 'err',
                 'text' =>
-                  "Report power failed, calibration data not retrieved yet",
+                    "Report power failed, calibration data not retrieved yet",
                 'device' => $saddr
             ];
             delete $self->{_response_queue}->{ hex($1) };
@@ -528,7 +534,7 @@ sub _process_response {
         # Calculate the live power
         my ( $pow1, $pow8 ) = $self->_calc_live_power($saddr);
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         # Create the corresponding xPL message
@@ -541,27 +547,27 @@ sub _process_response {
         ];
 
         print STDERR "PLUGWISE: Circle "
-          . $saddr
-          . " live power 1/8 is: $pow1/$pow8 W\n"
-          if DEBUG;
+            . $saddr
+            . " live power 1/8 is: $pow1/$pow8 W\n"
+            if DEBUG;
         return \%xplmsg;
     }
 
 # Process the response on a query known circles command
 # circle query resp|  seq. nr.     ||  Circle+ MAC   || Circle MAC on  || memory position
-    if ( $frame =~
-/^0019([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{2})$/
-      )
+    if ( $frame
+        =~ /^0019([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{2})$/
+        )
     {
         # Store the node in the object
         if ( $3 ne "FFFFFFFFFFFFFFFF" ) {
-            $self->{_plugwise}->{circles}->{ substr( $3, -6, 6 ) } =
-              {};    # Store the last 6 digits of the MAC address for later use
-                     # And immediately queue a request for calibration info
+            $self->{_plugwise}->{circles}->{ substr( $3, -6, 6 ) } = {
+            };    # Store the last 6 digits of the MAC address for later use
+                  # And immediately queue a request for calibration info
             $self->write( "0026" . $3 );
         }
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         # Only when we have walked the complete list
@@ -570,44 +576,44 @@ sub _process_response {
 
 # Process the response on a status request
 # status response  |  seq. nr.     ||  Circle+ MAC   || year,mon, min || curr_log_addr || powerstate
-    if ( $frame =~
-/^0024([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{8})([[:xdigit:]]{8})([[:xdigit:]]{2})/
-      )
+    if ( $frame
+        =~ /^0024([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{8})([[:xdigit:]]{8})([[:xdigit:]]{2})/
+        )
     {
         my $saddr   = $self->_addr_l2s($2);
         my $onoff   = $5 eq '00' ? 'off' : 'on';
         my $current = $5 eq '00' ? 'LOW' : 'HIGH';
         $self->{_plugwise}->{circles}->{$saddr}->{onoff} = $onoff;
-        $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr} =
-          ( hex($4) - 278528 ) / 8;
+        $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr}
+            = ( hex($4) - 278528 ) / 8;
 
         my $circle_date_time = $self->_tstamp2time($3);
 
         print STDERR
-"PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr="
-          . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr}
-          . ", datetime=$circle_date_time)\n"
-          if DEBUG;
+            "PLUGWISE: Received status response for circle $saddr: ($onoff, logaddr="
+            . $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr}
+            . ", datetime=$circle_date_time)\n"
+            if DEBUG;
 
         $xplmsg{body} = [
             'device' => $saddr,
             'type'   => 'output',
             'onoff'  => $onoff,
             'address' =>
-              $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr},
+                $self->{_plugwise}->{circles}->{$saddr}->{curr_logaddr},
             'datetime' => $circle_date_time
         ];
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         return \%xplmsg;
     }
 
     # Process the response on a calibration request
-    if ( $frame =~
-/^0027([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{8})([[:xdigit:]]{8})([[:xdigit:]]{8})([[:xdigit:]]{8})$/
-      )
+    if ( $frame
+        =~ /^0027([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{8})([[:xdigit:]]{8})([[:xdigit:]]{8})([[:xdigit:]]{8})$/
+        )
     {
 # calibration resp |  seq. nr.     ||  Circle+ MAC   || gainA         || gainB         || offtot        || offruis
 #print "Received for $2 calibration response!\n";
@@ -615,28 +621,28 @@ sub _process_response {
 
         #print "Short address  = $saddr\n";
         print STDERR
-          "PLUGWISE: Received calibration reponse for circle $saddr\n"
-          if DEBUG;
+            "PLUGWISE: Received calibration reponse for circle $saddr\n"
+            if DEBUG;
 
-        $self->{_plugwise}->{circles}->{$saddr}->{gainA} =
-          $self->_hex2float($3);
-        $self->{_plugwise}->{circles}->{$saddr}->{gainB} =
-          $self->_hex2float($4);
-        $self->{_plugwise}->{circles}->{$saddr}->{offtot} =
-          $self->_hex2float($5);
-        $self->{_plugwise}->{circles}->{$saddr}->{offruis} =
-          $self->_hex2float($6);
+        $self->{_plugwise}->{circles}->{$saddr}->{gainA}
+            = $self->_hex2float($3);
+        $self->{_plugwise}->{circles}->{$saddr}->{gainB}
+            = $self->_hex2float($4);
+        $self->{_plugwise}->{circles}->{$saddr}->{offtot}
+            = $self->_hex2float($5);
+        $self->{_plugwise}->{circles}->{$saddr}->{offruis}
+            = $self->_hex2float($6);
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         return "no_data";
     }
 
     # Process the response on a historic buffer readout
-    if ( $frame =~
-/^0049([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{8})$/
-      )
+    if ( $frame
+        =~ /^0049([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{16})([[:xdigit:]]{8})$/
+        )
     {
 # history resp     |  seq. nr.     ||  Circle+ MAC   || info 1         || info 2         || info 3         || info 4         || address
         my $s_id     = $self->_addr_l2s($2);
@@ -645,8 +651,8 @@ sub _process_response {
         #print "Received history response for $2 and address $log_addr!\n";
 
         # Assign the values to the data hash
-        $self->{_plugwise}->{circles}->{$s_id}->{history}->{logaddress} =
-          $log_addr;
+        $self->{_plugwise}->{circles}->{$s_id}->{history}->{logaddress}
+            = $log_addr;
         $self->{_plugwise}->{circles}->{$s_id}->{history}->{info1} = $3;
         $self->{_plugwise}->{circles}->{$s_id}->{history}->{info2} = $4;
         $self->{_plugwise}->{circles}->{$s_id}->{history}->{info3} = $5;
@@ -661,14 +667,14 @@ sub _process_response {
             $xplmsg{body}   = [
                 'type' => 'err',
                 'text' =>
-                  "Report power failed, calibration data not retrieved yet",
+                    "Report power failed, calibration data not retrieved yet",
                 'device' => $s_id
             ];
             delete $self->{_response_queue}->{ hex($1) };
 
             return \%xplmsg;
         }
-        my ( $tstamp, $energy ) = $self->report_history($s_id);
+        my ( $tstamp, $energy ) = $self->_report_history($s_id);
 
 # If the timestamp is no good, we tried to retrieve a field that contains no valid data, generate an error response
         if ( $tstamp eq "000000000000" ) {
@@ -677,7 +683,8 @@ sub _process_response {
             $xplmsg{schema} = 'log.basic';
             $xplmsg{body}   = [
                 'type' => 'err',
-                'text' => "Report power failed, no valid data in time interval",
+                'text' =>
+                    "Report power failed, no valid data in time interval",
                 'device' => $s_id
             ];
             delete $self->{_response_queue}->{ hex($1) };
@@ -693,10 +700,10 @@ sub _process_response {
         ];
 
         print STDERR "PLUGWISE: Historic energy for $s_id"
-          . "[$log_addr] is $energy kWh on $tstamp\n"
-          if DEBUG;
+            . "[$log_addr] is $energy kWh on $tstamp\n"
+            if DEBUG;
 
-       # Update the response_queue, remove the entry corresponding to this reply
+     # Update the response_queue, remove the entry corresponding to this reply
         delete $self->{_response_queue}->{ hex($1) };
 
         return \%xplmsg;
@@ -767,7 +774,7 @@ sub command {
 
     if ( !defined($command) || !defined($target) ) {
         carp(
-"A command to the stick needs a command and a target ID as parameter"
+            "A command to the stick needs a command and a target ID as parameter"
         );
         return 0;
     }
@@ -782,62 +789,66 @@ sub command {
 
     if ( defined $target ) {
 
-   # Commands that target a specific device might need to be sent multiple times
-   # if multiple devices are defined
+ # Commands that target a specific device might need to be sent multiple times
+ # if multiple devices are defined
         foreach my $circle ( split /,/, $target ) {
             $circle = uc($circle);
 
             if ( $command eq 'on' ) {
                 $packet = "0017" . $self->_addr_s2l($circle) . "01";
-            } elsif ( $command eq 'off' ) {
+            }
+            elsif ( $command eq 'off' ) {
                 $packet = "0017" . $self->_addr_s2l($circle) . "00";
-            } elsif ( $command eq 'status' ) {
+            }
+            elsif ( $command eq 'status' ) {
                 $packet = "0023" . $self->_addr_s2l($circle);
-            } elsif ( $command eq 'livepower' ) {
+            }
+            elsif ( $command eq 'livepower' ) {
 
-       # Ensure we have the calibration readings before we send the read command
-       # because the processing of the response of the read command required the
-       # calibration readings output to calculate the actual power
-                if (
-                    !defined(
+     # Ensure we have the calibration readings before we send the read command
+     # because the processing of the response of the read command required the
+     # calibration readings output to calculate the actual power
+                if (!defined(
                         $self->{_plugwise}->{circles}->{$circle}->{offruis}
                     )
-                  )
+                    )
                 {
                     my $longaddr = $self->_addr_s2l($circle);
                     $self->write( "0026" . $longaddr )
-                      ;    #, "Request calibration info");
+                        ;    #, "Request calibration info");
                 }
                 $packet = "0012" . $self->_addr_s2l($circle);
 
-            } elsif ( $command eq 'history' ) {
+            }
+            elsif ( $command eq 'history' ) {
 
-       # Ensure we have the calibration readings before we send the read command
-       # because the processing of the response of the read command required the
-       # calibration readings output to calculate the actual power
-                if (
-                    !defined(
+     # Ensure we have the calibration readings before we send the read command
+     # because the processing of the response of the read command required the
+     # calibration readings output to calculate the actual power
+                if (!defined(
                         $self->{_plugwise}->{circles}->{$circle}->{offruis}
                     )
-                  )
+                    )
                 {
                     my $longaddr = $self->_addr_s2l($circle);
                     $self->write( "0026" . $longaddr )
-                      ;    #, "Request calibration info");
+                        ;    #, "Request calibration info");
                 }
 
                 if ( !defined $parameter ) {
                     carp(
-"The 'history' command needs both a Circle ID and an address to read..."
+                        "The 'history' command needs both a Circle ID and an address to read..."
                     );
                     return 0;
                 }
 
                 my $address = $parameter * 8 + 278528;
-                $packet = "0048"
-                  . $self->_addr_s2l($circle)
-                  . sprintf( "%08X", $address );
-            } else {
+                $packet
+                    = "0048"
+                    . $self->_addr_s2l($circle)
+                    . sprintf( "%08X", $address );
+            }
+            else {
                 croak("Received invalid command '$command'\n");
                 return 0;
             }
@@ -871,20 +882,21 @@ sub _query_connected_circles {
     my $index = 0;
 
     # Interrogate the Circle+ and add its info into the circles hash
-    $self->{_plugwise}->{coordinator_MAC} =
-      $self->_addr_l2s( $self->{_plugwise}->{network_key} );
+    $self->{_plugwise}->{coordinator_MAC}
+        = $self->_addr_l2s( $self->{_plugwise}->{network_key} );
     $self->{_plugwise}->{circles} = {};    # Reset known circles hash
-    $self->{_plugwise}->{circles}->{ $self->{_plugwise}->{coordinator_MAC} } =
-      {};                                  # Add entry for Circle+
+    $self->{_plugwise}->{circles}->{ $self->{_plugwise}->{coordinator_MAC} }
+        = {};                              # Add entry for Circle+
     $self->write(
         "0026" . $self->_addr_s2l( $self->{_plugwise}->{coordinator_MAC} ) );
 
     # Interrogate the first x connected devices
     while ( $index < $self->{list_circles_count} ) {
         my $strindex = sprintf( "%02X", $index++ );
-        my $packet = "0018"
-          . $self->_addr_s2l( $self->{_plugwise}->{coordinator_MAC} )
-          . $strindex;
+        my $packet
+            = "0018"
+            . $self->_addr_s2l( $self->{_plugwise}->{coordinator_MAC} )
+            . $strindex;
         $self->write($packet);    #, "Query connected device $strindex");
     }
 
@@ -927,6 +939,35 @@ sub _hexdump {
     $r . ' ' . $s;
 }
 
+sub _report_history {
+    my ( $self, $id ) = @_;
+
+    # Get the first data entry
+    my $data = $self->{_plugwise}->{circles}->{$id}->{history}->{info1};
+
+    my $energy = 0;
+    my $tstamp = 0;
+
+    if ( $data =~ /^([[:xdigit:]]{8})([[:xdigit:]]{8})$/ ) {
+
+        # Calculate Wh
+        my $corrected_pulses = $self->pulsecorrection( $id, hex($2) );
+        $energy = $corrected_pulses / 3600 / 468.9385193 * 1000;
+        $tstamp = $self->_tstamp2time($1);
+
+        # Round to 1 Wh
+        $energy = round($energy);
+
+        # Report kWh
+        $energy = $energy / 1000;
+
+        #print "info1 date: $tstamp, energy $energy kWh\n";
+    }
+
+    return ( $tstamp, $energy );
+
+}
+
 # Convert a Plugwise timestamp to a human-readable format
 sub _tstamp2time {
     my ( $self, $tstamp ) = @_;
@@ -944,7 +985,8 @@ sub _tstamp2time {
         my $circle_minutes = $circle_time % 60;
         $circle_time = sprintf( "%02i%02i", $circle_hours, $circle_minutes );
         return $circle_date . $circle_time;
-    } else {
+    }
+    else {
         return "000000000000";
     }
 }
@@ -954,11 +996,9 @@ sub _calc_live_power {
     my ( $self, $id ) = @_;
 
     #my ($pulse1, $pulse8) = $self->pulsecorrection($id);
-    my $pulse1 =
-      $self->_pulsecorrection( $id,
+    my $pulse1 = $self->_pulsecorrection( $id,
         hex( $self->{_plugwise}->{circles}->{$id}->{pulse1} ) );
-    my $pulse8 =
-      $self->_pulsecorrection( $id,
+    my $pulse8 = $self->_pulsecorrection( $id,
         hex( $self->{_plugwise}->{circles}->{$id}->{pulse8} ) / 8 );
 
     my $live1 = $pulse1 * 1000 / 468.9385193;
@@ -983,10 +1023,10 @@ sub _pulsecorrection {
     my $gainB    = $self->{_plugwise}->{circles}->{$id}->{gainB};
 
     # Correct the pulses with the calibration data
-    my $out =
-      ( ( $pulses + $offnoise ) ^ 2 ) * $gainB +
-      ( ( $pulses + $offnoise ) * $gainA ) +
-      $offtot;
+    my $out
+        = ( ( $pulses + $offnoise ) ^ 2 ) * $gainB
+        + ( ( $pulses + $offnoise ) * $gainA )
+        + $offtot;
 
     # Never report negative values, can happen with really small values
     $out = 0 if ( $out < 0 );
