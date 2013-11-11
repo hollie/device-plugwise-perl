@@ -1,10 +1,16 @@
 ==================================================
-Changes from 2011-11-04 00:00:00 +0000 to present.
+Changes from 2012-11-11 00:00:00 +0000 to present.
 ==================================================
 
 ------------------------------------------
-version 0.4.1 at 2012-11-03 10:34:20 +0000
+version 0.4.2 at 2013-11-11 20:42:45 +0000
 ------------------------------------------
+
+  Change: efb53acfad86f676a41c6f06b9b4a6073e305caf
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2013-11-11 21:15:44 +0000
+
+    Bugfix: report_history call was not implemented yet 
 
   Change: 43f0017a794d4dee202f11209181c209debc9961
   Author: Lieven Hollevoet <hollie@lika.be>
@@ -222,72 +228,6 @@ version 0.4.1 at 2012-11-03 10:34:20 +0000
 
     Initial commit 
 
-----------------------------------------
-version 0.3 at 2012-11-02 20:38:00 +0000
-----------------------------------------
-
-  Change: c8aac6f307e9fc2c1e310ef491a9bf3640bc7c38
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-11-02 21:38:00 +0000
-
-    Build results of b0e2c21 (on master) 
-
-----------------------------------------
-version 0.2 at 2012-10-05 19:37:51 +0000
-----------------------------------------
-
-  Change: b3d2120cbca3ed05f184d58dd809f17a83d07cbf
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-10-05 21:37:51 +0000
-
-    Build results of f8fc9c4 (on master) 
-
-----------------------------------------
-version 0.1 at 2012-10-03 20:11:46 +0000
-----------------------------------------
-
-  Change: bb53230fe703783cc86bc17cf42bf71ae8a10ced
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-10-03 22:11:46 +0000
-
-    Build results of 9f01a66 (on master) 
-
-------------------------------------------
-version 0.003 at 2012-09-20 21:26:24 +0000
-------------------------------------------
-
-  Change: 74b687d21f15c0b17bfec14cd8ad95d3daab3ea4
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-09-20 23:26:24 +0000
-
-    Build results of 9d515e6 (on master) 
-
-------------------------------------------
-version 0.002 at 2012-09-13 18:55:16 +0000
-------------------------------------------
-
-  Change: ca3d06e39e3079ee36296b33dee1cd7321ef26b8
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-09-13 20:55:16 +0000
-
-    Build results of 4aa3fd8 (on master) 
-
-------------------------------------------
-version 0.001 at 2012-09-13 06:10:50 +0000
-------------------------------------------
-
-  Change: 63031e5b2e4dc113c70ece441c0777464269602d
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-09-13 08:10:50 +0000
-
-    Build results of 4043e98 (on master) 
-
-  Change: 7179cbd465318523bcd7bfd1ea6247222aac1764
-  Author: Lieven Hollevoet <hollie@lika.be>
-  Date : 2012-09-13 08:05:32 +0000
-
-    Build results of abc3d11 (on master) 
-
-================
-End of releases.
-================
+================================================
+Plus 3 releases after 2012-11-11 00:00:00 +0000.
+================================================

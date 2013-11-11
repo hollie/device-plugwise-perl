@@ -4,7 +4,7 @@
       "Lieven Hollevoet <hollie@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300028, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.132510",
    "license" : [
       "perl_5"
    ],
@@ -63,6 +63,6 @@
          "web" : "https://github.com/hollie/device-plugwise-perl"
       }
    },
-   "version" : "0.4.1"
+   "version" : "0.4.2"
 }
 
