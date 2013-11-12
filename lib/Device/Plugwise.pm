@@ -3,7 +3,7 @@ use warnings;
 
 package Device::Plugwise;
 {
-  $Device::Plugwise::VERSION = '0.4.3';
+  $Device::Plugwise::VERSION = '0.5';
 }
 
 use Carp qw/croak carp/;
@@ -886,7 +886,7 @@ Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 =head1 VERSION
 
-version 0.4.3
+version 0.5
 
 =head1 SYNOPSIS
 

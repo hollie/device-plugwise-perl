@@ -2,9 +2,15 @@
 Changes from 2012-11-12 00:00:00 +0000 to present.
 ==================================================
 
-------------------------------------------
-version 0.4.3 at 2013-11-12 09:19:57 +0000
-------------------------------------------
+----------------------------------------
+version 0.5 at 2013-11-12 09:30:58 +0000
+----------------------------------------
+
+  Change: 10dd2f464aad7898e29d130d499e418311182067
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2013-11-12 10:30:50 +0000
+
+    Pushed version number to next point release 
 
   Change: fef30e90da52ab9223e7e823dc6279da7090d51c
   Author: Lieven Hollevoet <hollie@lika.be>
