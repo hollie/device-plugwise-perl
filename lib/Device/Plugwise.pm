@@ -951,7 +951,7 @@ sub _report_history {
     if ( $data =~ /^([[:xdigit:]]{8})([[:xdigit:]]{8})$/ ) {
 
         # Calculate Wh
-        my $corrected_pulses = $self->pulsecorrection( $id, hex($2) );
+        my $corrected_pulses = $self->_pulsecorrection( $id, hex($2) );
         $energy = $corrected_pulses / 3600 / 468.9385193 * 1000;
         $tstamp = $self->_tstamp2time($1);
 
