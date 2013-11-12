@@ -28,8 +28,8 @@ my $status = $plugwise->status();
 is $status->{connected}, 1, '... status updated OK';
 is $status->{short_key}, 'BABE', "... network key extracted";
 
-is $plugwise->command('on', 'ABCDEF'), 1, "... command send OK";
-is $plugwise->command('off', 'ABCDEE'), 1, "... command send OK";
+is $plugwise->command('on', 'ABCDEF'), 1, "... on command send OK";
+is $plugwise->command('off', 'ABCDEE'), 1, "... off command send OK";
 is $plugwise->queue_size(), 1, "... message queued OK";
 my $msg = $plugwise->read(3);
 is @{$msg->{body}}[-1], "on", "... command response OK";
