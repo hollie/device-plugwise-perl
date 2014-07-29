@@ -447,7 +447,8 @@ sub _process_response {
     $self->{_awaiting_stick_response} = 0;
 
     if ( $frame
-        =~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
+        #=~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
+        =~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})(?:([[:xdigit:]]{16})([[:xdigit:]]{4}))?/
         )
 
 # init resp | seq. nr.|| stick MAC addr || don't care    || network key    || short key
