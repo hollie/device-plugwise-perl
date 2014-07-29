@@ -2,7 +2,7 @@ NAME
     Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 VERSION
-    version 0.5
+    version 0.5.1
 
 SYNOPSIS
       my $plugwise = Device::Plugwise->new(device => '/dev/cu.usbserial01');

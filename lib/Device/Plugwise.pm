@@ -2,10 +2,7 @@ use strict;
 use warnings;
 
 package Device::Plugwise;
-{
-  $Device::Plugwise::VERSION = '0.5';
-}
-
+$Device::Plugwise::VERSION = '0.5.1';
 use Carp qw/croak carp/;
 use Device::SerialPort qw/:PARAM :STAT 0.07/;
 use Fcntl;
@@ -330,7 +327,8 @@ sub _process_response {
     $self->{_awaiting_stick_response} = 0;
 
     if ( $frame
-        =~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
+        #=~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})/
+        =~ /^0011([[:xdigit:]]{4})([[:xdigit:]]{16})([[:xdigit:]]{4})(?:([[:xdigit:]]{16})([[:xdigit:]]{4}))?/
         )
 
 # init resp | seq. nr.|| stick MAC addr || don't care    || network key    || short key
@@ -886,7 +884,7 @@ Device::Plugwise - Perl module to communicate with Plugwise hardware
 
 =head1 VERSION
 
-version 0.5
+version 0.5.1
 
 =head1 SYNOPSIS
 

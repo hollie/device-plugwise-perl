@@ -1,10 +1,16 @@
 ==================================================
-Changes from 2012-11-12 00:00:00 +0000 to present.
+Changes from 2013-07-29 00:00:00 +0000 to present.
 ==================================================
 
-----------------------------------------
-version 0.5 at 2013-11-12 09:30:58 +0000
-----------------------------------------
+------------------------------------------
+version 0.5.1 at 2014-07-29 19:38:58 +0000
+------------------------------------------
+
+  Change: cc1aa30bdfc56eaf12dfa9d963a2b5f7981f7038
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2014-07-29 21:38:50 +0000
+
+    Initial commit for issue #3, ready for testing 
 
   Change: 10dd2f464aad7898e29d130d499e418311182067
   Author: Lieven Hollevoet <hollie@lika.be>
@@ -241,6 +247,28 @@ version 0.5 at 2013-11-12 09:30:58 +0000
 
     Initial commit 
 
+----------------------------------------
+version 0.5 at 2013-11-12 09:32:50 +0000
+----------------------------------------
+
+  Change: dd6927e4445360c07d6202e95d4b6459d5b3b4eb
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2013-11-12 10:32:50 +0000
+
+    Build results of 10dd2f4 (on master) 
+
+  Change: 1470a94e7da480b0e7fcd902638d7779baa3b9f0
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2013-11-12 10:20:10 +0000
+
+    Build results of fef30e9 (on master) 
+
+  Change: b88d317fdaf88aa0d54aa0f1f0adff659511bbb2
+  Author: Lieven Hollevoet <hollie@lika.be>
+  Date : 2012-11-03 11:34:29 +0000
+
+    Build results of 43f0017 (on master) 
+
 ================================================
-Plus 3 releases after 2012-11-12 00:00:00 +0000.
+Plus 3 releases after 2013-07-29 00:00:00 +0000.
 ================================================
